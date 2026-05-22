@@ -279,7 +279,7 @@ WEATHER_SENSORS: tuple[OutdoorSensorDescription, ...] = (
 # ---------------------------------------------------------------------------
 AGRO_SENSORS: tuple[OutdoorSensorDescription, ...] = (
     OutdoorSensorDescription(key="et0_fao_evapotranspiration", name="Evapotranspiration", native_unit_of_measurement="mm", state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=False),
-    OutdoorSensorDescription(key="vapour_pressure_deficit", name="Vapour Pressure Deficit", native_unit_of_measurement=UnitOfPressure.KILOPASCAL, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=False),
+    OutdoorSensorDescription(key="vapour_pressure_deficit", name="Vapour Pressure Deficit", native_unit_of_measurement=UnitOfPressure.KPA, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=False),
     OutdoorSensorDescription(key="cape", name="CAPE", native_unit_of_measurement="J/kg", state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=False),
     OutdoorSensorDescription(key="wet_bulb_temperature_2m", name="Wet Bulb Temperature", device_class=SensorDeviceClass.TEMPERATURE, native_unit_of_measurement=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=False),
 )
