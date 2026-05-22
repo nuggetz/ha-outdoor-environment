@@ -34,4 +34,4 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements_test.txt
       - name: Run tests
-        run: pytest --cov=custom_components/outdoor_environment --cov-report=term-missing -v
+        run: python -m pytest --cov=custom_components/outdoor_environment --cov-report=term-missing -v
