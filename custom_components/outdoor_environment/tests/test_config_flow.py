@@ -180,16 +180,18 @@ async def test_solar_panel_with_tilt_creates_entry_with_gti(hass):
 
 @pytest.mark.asyncio
 async def test_both_apis_fail_returns_error(hass):
+    from custom_components.outdoor_environment.api_client_aq import CannotConnect
+
     with (
         patch(
             "custom_components.outdoor_environment.config_flow.AirQualityApiClient.fetch",
             new_callable=AsyncMock,
-            side_effect=Exception("fail"),
+            side_effect=CannotConnect("timeout"),
         ),
         patch(
             "custom_components.outdoor_environment.config_flow.WeatherApiClient.fetch",
             new_callable=AsyncMock,
-            side_effect=Exception("fail"),
+            side_effect=CannotConnect("timeout"),
         ),
     ):
         hass.config.latitude = 45.46

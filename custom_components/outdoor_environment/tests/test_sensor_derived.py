@@ -27,7 +27,7 @@ from custom_components.outdoor_environment.sensor_derived import (
 
 def test_heat_index_formula():
     result = heat_index(32.0, 70.0)
-    assert 35.0 < result < 45.0
+    assert 38.0 < result < 46.0
 
 
 def test_wind_chill_formula():

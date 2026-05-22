@@ -115,10 +115,10 @@ class OutdoorEnvironmentConfigFlow(ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_NAME, default="Outdoor Environment"): TextSelector(),
                 vol.Required(CONF_USE_HOME_LOCATION, default=True): BooleanSelector(),
                 vol.Optional(CONF_LATITUDE, default=self.hass.config.latitude): NumberSelector(
-                    NumberSelectorConfig(min=-90, max=90, step=0.0001, mode=NumberSelectorMode.BOX)
+                    NumberSelectorConfig(min=-90, max=90, step="any", mode=NumberSelectorMode.BOX)
                 ),
                 vol.Optional(CONF_LONGITUDE, default=self.hass.config.longitude): NumberSelector(
-                    NumberSelectorConfig(min=-180, max=180, step=0.0001, mode=NumberSelectorMode.BOX)
+                    NumberSelectorConfig(min=-180, max=180, step="any", mode=NumberSelectorMode.BOX)
                 ),
                 vol.Required(CONF_ENABLE_AIR_QUALITY, default=True): BooleanSelector(),
                 vol.Required(CONF_ENABLE_POLLEN, default=in_europe): BooleanSelector(),
@@ -203,10 +203,10 @@ class OutdoorEnvironmentOptionsFlow(OptionsFlow):
             {
                 vol.Required(CONF_USE_HOME_LOCATION, default=current.get(CONF_USE_HOME_LOCATION, True)): BooleanSelector(),
                 vol.Optional(CONF_LATITUDE, default=lat): NumberSelector(
-                    NumberSelectorConfig(min=-90, max=90, step=0.0001, mode=NumberSelectorMode.BOX)
+                    NumberSelectorConfig(min=-90, max=90, step="any", mode=NumberSelectorMode.BOX)
                 ),
                 vol.Optional(CONF_LONGITUDE, default=lon): NumberSelector(
-                    NumberSelectorConfig(min=-180, max=180, step=0.0001, mode=NumberSelectorMode.BOX)
+                    NumberSelectorConfig(min=-180, max=180, step="any", mode=NumberSelectorMode.BOX)
                 ),
                 vol.Required(CONF_ENABLE_AIR_QUALITY, default=current.get(CONF_ENABLE_AIR_QUALITY, True)): BooleanSelector(),
                 vol.Required(CONF_ENABLE_POLLEN, default=current.get(CONF_ENABLE_POLLEN, in_europe)): BooleanSelector(),

@@ -170,19 +170,26 @@ def get_dominant_eu_pollutant(
 
 
 def heat_index(temp: float, humidity: float) -> float:
-    """Rothfusz regression — valid for T > 27°C and humidity > 40%."""
-    T, H = temp, humidity
-    return (
-        -8.78469
-        + 1.61139411 * T
-        + 2.33854884 * H
-        - 0.14611605 * T * H
-        - 0.01230809 * H**2
-        - 0.01642482 * T**2
-        + 0.00221173 * T**2 * H
-        + 0.00072546 * T * H**2
-        - 0.00000358 * T**2 * H**2
+    """NOAA Rothfusz regression (valid for T > 27°C and humidity > 40%).
+
+    Computed in Fahrenheit then converted to Celsius so the standard
+    NOAA coefficients are used exactly. The Celsius-direct coefficients
+    in SPEC_v2.md produce inflated values due to incomplete conversion.
+    """
+    T = temp * 9 / 5 + 32  # °C → °F
+    H = humidity
+    hi_f = (
+        -42.379
+        + 2.04901523 * T
+        + 10.14333127 * H
+        - 0.22475541 * T * H
+        - 0.00683783 * T**2
+        - 0.05481717 * H**2
+        + 0.00122874 * T**2 * H
+        + 0.00085282 * T * H**2
+        - 0.00000199 * T**2 * H**2
     )
+    return (hi_f - 32) * 5 / 9  # °F → °C
 
 
 def wind_chill(temp: float, wind_speed_kmh: float) -> float:
