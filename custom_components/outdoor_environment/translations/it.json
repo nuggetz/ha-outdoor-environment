@@ -1,0 +1,63 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurazione Outdoor Environment",
+        "description": "Configura l'integrazione sensori ambientali outdoor. Usa le API gratuite Open-Meteo — nessuna API key richiesta.",
+        "data": {
+          "name": "Nome integrazione",
+          "use_home_location": "Usa la posizione di Home Assistant",
+          "latitude": "Latitudine",
+          "longitude": "Longitudine",
+          "enable_air_quality": "Abilita sensori qualità dell'aria (AQI, PM, NO₂, O₃ …)",
+          "enable_pollen": "Abilita sensori polline",
+          "enable_uv": "Abilita sensori indice UV",
+          "enable_weather": "Abilita sensori meteo",
+          "enable_solar": "Abilita sensori radiazione solare"
+        }
+      },
+      "solar_panel": {
+        "title": "Configurazione Pannello Solare (Opzionale)",
+        "description": "Configura l'orientamento del pannello solare per ottenere il sensore GTI (Global Tilted Irradiance). Lascia vuoto o salta per continuare senza GTI.",
+        "data": {
+          "panel_tilt": "Inclinazione pannello (gradi, 0 = orizzontale, 90 = verticale)",
+          "panel_azimuth": "Azimut pannello (gradi, 0 = Sud, -90 = Est, 90 = Ovest)",
+          "skip_solar_panel": "Salta configurazione pannello solare"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossibile connettersi alle API Open-Meteo. Verifica la connessione internet e riprova.",
+      "unknown": "Errore imprevisto."
+    },
+    "abort": {
+      "already_configured": "L'integrazione è già configurata."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opzioni Outdoor Environment",
+        "data": {
+          "use_home_location": "Usa la posizione di Home Assistant",
+          "latitude": "Latitudine",
+          "longitude": "Longitudine",
+          "enable_air_quality": "Abilita sensori qualità dell'aria",
+          "enable_pollen": "Abilita sensori polline",
+          "enable_uv": "Abilita sensori UV",
+          "enable_weather": "Abilita sensori meteo",
+          "enable_solar": "Abilita sensori solari",
+          "panel_tilt": "Inclinazione pannello (gradi)",
+          "panel_azimuth": "Azimut pannello (gradi)",
+          "aq_update_interval_minutes": "Intervallo aggiornamento qualità aria (minuti)",
+          "weather_update_interval_minutes": "Intervallo aggiornamento meteo (minuti)",
+          "irrigation_threshold_mm": "Soglia irrigazione necessaria (mm)",
+          "enable_group_a_sub": "Abilita sub-AQI EU per inquinante",
+          "enable_group_a_sub_us": "Abilita sub-AQI US per inquinante",
+          "enable_group_a_extra": "Abilita sensori inquinanti avanzati",
+          "enable_group_d_agro": "Abilita sensori agrometeo"
+        }
+      }
+    }
+  }
+}

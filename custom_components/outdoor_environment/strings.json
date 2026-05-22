@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Outdoor Environment Setup",
+        "description": "Configure your outdoor environment sensor integration. Uses free Open-Meteo APIs — no API key required.",
+        "data": {
+          "name": "Integration name",
+          "use_home_location": "Use Home Assistant location",
+          "latitude": "Latitude",
+          "longitude": "Longitude",
+          "enable_air_quality": "Enable air quality sensors (AQI, PM, NO₂, O₃ …)",
+          "enable_pollen": "Enable pollen sensors",
+          "enable_uv": "Enable UV index sensors",
+          "enable_weather": "Enable weather sensors",
+          "enable_solar": "Enable solar radiation sensors"
+        }
+      },
+      "solar_panel": {
+        "title": "Solar Panel Configuration (Optional)",
+        "description": "Configure your solar panel orientation to get the Global Tilted Irradiance (GTI) sensor. Leave blank or skip to skip.",
+        "data": {
+          "panel_tilt": "Panel tilt (degrees, 0 = horizontal, 90 = vertical)",
+          "panel_azimuth": "Panel azimuth (degrees, 0 = South, -90 = East, 90 = West)",
+          "skip_solar_panel": "Skip solar panel configuration"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to Open-Meteo APIs. Check your internet connection and try again.",
+      "invalid_auth": "Invalid authentication.",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "Integration is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Outdoor Environment Options",
+        "data": {
+          "use_home_location": "Use Home Assistant location",
+          "latitude": "Latitude",
+          "longitude": "Longitude",
+          "enable_air_quality": "Enable air quality sensors",
+          "enable_pollen": "Enable pollen sensors",
+          "enable_uv": "Enable UV sensors",
+          "enable_weather": "Enable weather sensors",
+          "enable_solar": "Enable solar sensors",
+          "panel_tilt": "Panel tilt (degrees)",
+          "panel_azimuth": "Panel azimuth (degrees)",
+          "aq_update_interval_minutes": "Air quality update interval (minutes)",
+          "weather_update_interval_minutes": "Weather update interval (minutes)",
+          "irrigation_threshold_mm": "Irrigation needed threshold (mm)",
+          "enable_group_a_sub": "Enable EU sub-AQI per pollutant",
+          "enable_group_a_sub_us": "Enable US sub-AQI per pollutant",
+          "enable_group_a_extra": "Enable advanced pollutant sensors",
+          "enable_group_d_agro": "Enable agrometeorological sensors"
+        }
+      }
+    }
+  }
+}
