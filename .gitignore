@@ -1,6 +1,6 @@
-# Project-specific
+# Project-specific — spec/planning docs and IDE files
 .claude/
-docs/
+docs/*.md
 ha-outdoor-environment.code-workspace
 
 # Python
