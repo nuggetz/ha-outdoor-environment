@@ -133,7 +133,7 @@ AQ_SENSORS: tuple[OutdoorSensorDescription, ...] = (
     OutdoorSensorDescription(
         key="carbon_monoxide",
         name="CO",
-        device_class=SensorDeviceClass.CARBON_MONOXIDE,
+        device_class=SensorDeviceClass.CO,
         native_unit_of_measurement=CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
         state_class=SensorStateClass.MEASUREMENT,
         coordinator_type=_COORDINATOR_AQ,
@@ -142,7 +142,7 @@ AQ_SENSORS: tuple[OutdoorSensorDescription, ...] = (
     OutdoorSensorDescription(
         key="carbon_dioxide",
         name="CO₂",
-        device_class=SensorDeviceClass.CARBON_DIOXIDE,
+        device_class=SensorDeviceClass.CO2,
         native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
         state_class=SensorStateClass.MEASUREMENT,
         coordinator_type=_COORDINATOR_AQ,
@@ -266,7 +266,7 @@ WEATHER_SENSORS: tuple[OutdoorSensorDescription, ...] = (
     OutdoorSensorDescription(key="wind_speed_10m", name="Wind Speed", device_class=SensorDeviceClass.WIND_SPEED, native_unit_of_measurement=UnitOfSpeed.KILOMETERS_PER_HOUR, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
     OutdoorSensorDescription(key="wind_direction_10m", name="Wind Direction", native_unit_of_measurement="°", state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
     OutdoorSensorDescription(key="wind_gusts_10m", name="Wind Gusts", device_class=SensorDeviceClass.WIND_SPEED, native_unit_of_measurement=UnitOfSpeed.KILOMETERS_PER_HOUR, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
-    OutdoorSensorDescription(key="cloud_cover", name="Cloud Cover", device_class=SensorDeviceClass.CLOUD_COVERAGE, native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
+    OutdoorSensorDescription(key="cloud_cover", name="Cloud Cover", native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
     OutdoorSensorDescription(key="visibility", name="Visibility", device_class=SensorDeviceClass.DISTANCE, native_unit_of_measurement=UnitOfLength.METERS, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
     OutdoorSensorDescription(key="surface_pressure", name="Pressure", device_class=SensorDeviceClass.ATMOSPHERIC_PRESSURE, native_unit_of_measurement=UnitOfPressure.HPA, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
     OutdoorSensorDescription(key="weather_code", name="Weather Code", state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
