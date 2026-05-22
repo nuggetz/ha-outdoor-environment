@@ -12,8 +12,12 @@ from custom_components.outdoor_environment.const import DOMAIN
 
 @pytest.fixture(autouse=True)
 def _bypass_api_calls():
-    """Mock both API clients so config flow tests never make real HTTP requests."""
+    """Mock API clients and async_setup_entry so config flow tests stay lightweight."""
     with (
+        patch(
+            "custom_components.outdoor_environment.async_setup_entry",
+            return_value=True,
+        ),
         patch(
             "custom_components.outdoor_environment.config_flow.AirQualityApiClient.fetch",
             new_callable=AsyncMock,
