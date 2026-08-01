@@ -2,6 +2,7 @@
 .claude/
 docs/*.md
 ha-outdoor-environment.code-workspace
+CLAUDE.md
 
 # Python
 __pycache__/

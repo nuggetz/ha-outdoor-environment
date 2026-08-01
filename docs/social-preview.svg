@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#05322a"/>
+      <stop offset="55%" stop-color="#0a463a"/>
+      <stop offset="100%" stop-color="#0f5a49"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f5b544" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#f5b544" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="sunFill" cx="38%" cy="32%" r="70%">
+      <stop offset="0%" stop-color="#ffd479"/>
+      <stop offset="100%" stop-color="#eda033"/>
+    </radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="18" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="26"/>
+    </filter>
+  </defs>
+
+  <!-- background -->
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <circle cx="1050" cy="150" r="360" fill="#126a55" opacity="0.35" filter="url(#soft)"/>
+  <circle cx="1180" cy="540" r="260" fill="#0d7a5f" opacity="0.22" filter="url(#soft)"/>
+  <rect x="18" y="18" width="1244" height="604" rx="28" fill="none" stroke="#2e7d68" stroke-width="2" opacity="0.55"/>
+
+  <!-- atmosphere rings on the right -->
+  <g transform="translate(985,320)" opacity="0.9">
+    <circle r="250" fill="url(#sunGlow)"/>
+    <circle r="232" fill="none" stroke="#3f8f79" stroke-width="1.5" stroke-dasharray="6 10" opacity="0.5"/>
+    <circle r="176" fill="none" stroke="#4a9c85" stroke-width="1.5" stroke-dasharray="6 10" opacity="0.6"/>
+    <circle r="120" fill="none" stroke="#57ab93" stroke-width="1.5" stroke-dasharray="6 10" opacity="0.7"/>
+
+    <!-- sun -->
+    <circle r="66" fill="url(#sunFill)" filter="url(#glow)"/>
+    <g stroke="#f5c15c" stroke-width="6" stroke-linecap="round" opacity="0.95">
+      <line x1="0" y1="-92" x2="0" y2="-118"/>
+      <line x1="65" y1="-65" x2="84" y2="-84"/>
+      <line x1="92" y1="0" x2="118" y2="0"/>
+      <line x1="65" y1="65" x2="84" y2="84"/>
+      <line x1="0" y1="92" x2="0" y2="118"/>
+      <line x1="-65" y1="65" x2="-84" y2="84"/>
+      <line x1="-92" y1="0" x2="-118" y2="0"/>
+      <line x1="-65" y1="-65" x2="-84" y2="-84"/>
+    </g>
+
+    <!-- sensor nodes on the rings -->
+    <g font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="bold">
+      <g transform="translate(-126,-146)">
+        <rect x="-46" y="-19" width="92" height="38" rx="19" fill="#0a3b31" stroke="#57ab93" stroke-width="1.6"/>
+        <text x="0" y="6" text-anchor="middle" fill="#a9e0cd">AQI</text>
+      </g>
+      <g transform="translate(152,-122)">
+        <rect x="-40" y="-19" width="80" height="38" rx="19" fill="#0a3b31" stroke="#57ab93" stroke-width="1.6"/>
+        <text x="0" y="6" text-anchor="middle" fill="#a9e0cd">UV</text>
+      </g>
+      <g transform="translate(178,96)">
+        <rect x="-56" y="-19" width="112" height="38" rx="19" fill="#0a3b31" stroke="#57ab93" stroke-width="1.6"/>
+        <text x="0" y="6" text-anchor="middle" fill="#a9e0cd">PM2.5</text>
+      </g>
+      <g transform="translate(-146,124)">
+        <rect x="-56" y="-19" width="112" height="38" rx="19" fill="#0a3b31" stroke="#57ab93" stroke-width="1.6"/>
+        <text x="0" y="6" text-anchor="middle" fill="#a9e0cd">POLLEN</text>
+      </g>
+      <g transform="translate(8,206)">
+        <rect x="-46" y="-19" width="92" height="38" rx="19" fill="#0a3b31" stroke="#57ab93" stroke-width="1.6"/>
+        <text x="0" y="6" text-anchor="middle" fill="#a9e0cd">ET0</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- copy block -->
+  <g transform="translate(92,0)">
+    <text x="2" y="192" font-family="Helvetica, Arial, sans-serif" font-size="21" font-weight="bold"
+          fill="#6fbfa4" letter-spacing="5.5">HOME ASSISTANT INTEGRATION</text>
+
+    <text x="0" y="285" font-family="Helvetica, Arial, sans-serif" font-size="78" font-weight="bold"
+          fill="#ffffff" letter-spacing="-1">Outdoor</text>
+    <text x="0" y="366" font-family="Helvetica, Arial, sans-serif" font-size="78" font-weight="bold"
+          fill="#ffffff" letter-spacing="-1">Environment</text>
+
+    <text x="2" y="424" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#a8cfc0">
+      80+ sensors — air quality, pollen, UV, weather, solar
+    </text>
+    <text x="2" y="464" font-family="Helvetica, Arial, sans-serif" font-size="23" fill="#79ab99">
+      Powered by Open-Meteo · no API key, no registration
+    </text>
+
+    <!-- pills -->
+    <g font-family="Helvetica, Arial, sans-serif">
+      <rect x="2" y="500" width="212" height="48" rx="24" fill="#41BDF5"/>
+      <text x="108" y="531" text-anchor="middle" font-size="19" font-weight="bold"
+            fill="#05322a" letter-spacing="1.4">HACS DEFAULT</text>
+
+      <rect x="230" y="500" width="150" height="48" rx="24" fill="none" stroke="#3f8f79" stroke-width="2"/>
+      <text x="305" y="531" text-anchor="middle" font-size="19" fill="#a8cfc0">HA 2024.1+</text>
+
+      <rect x="396" y="500" width="164" height="48" rx="24" fill="none" stroke="#3f8f79" stroke-width="2"/>
+      <text x="478" y="531" text-anchor="middle" font-size="19" fill="#a8cfc0">Zero API key</text>
+    </g>
+
+    <text x="2" y="594" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="#5d9483">
+      github.com/nuggetz/ha-outdoor-environment
+    </text>
+  </g>
+</svg>

@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/hacs/integration"><img src="https://img.shields.io/badge/HACS-Custom-orange.svg" alt="HACS Custom"></a>
+  <a href="https://github.com/hacs/default"><img src="https://img.shields.io/badge/HACS-Default-41BDF5.svg" alt="HACS Default"></a>
   <a href="https://www.home-assistant.io/blog/categories/release-notes/"><img src="https://img.shields.io/badge/HA-%E2%89%A52024.1-blue.svg" alt="HA ≥ 2024.1"></a>
   <a href="https://creativecommons.org/licenses/by/4.0/"><img src="https://img.shields.io/badge/data-CC%20BY%204.0-green.svg" alt="CC BY 4.0"></a>
   <a href="#"><img src="https://img.shields.io/badge/iot__class-cloud__polling-lightgrey.svg" alt="cloud_polling"></a>
@@ -16,6 +16,11 @@
 A Home Assistant custom integration that exposes **80+ outdoor environment sensors** using two free, no-key [Open-Meteo](https://open-meteo.com) APIs.
 
 > **Zero API key · Zero registration · Zero cost · Global coverage**
+
+<p align="center">
+  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=nuggetz&repository=ha-outdoor-environment&category=integration"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open in HACS"></a>
+  <a href="https://my.home-assistant.io/redirect/config_flow_start/?domain=outdoor_environment"><img src="https://my.home-assistant.io/badges/config_flow_start.svg" alt="Add integration"></a>
+</p>
 
 ---
 
@@ -40,11 +45,16 @@ A Home Assistant custom integration that exposes **80+ outdoor environment senso
 
 ### Via HACS (recommended)
 
-1. Open HACS → Integrations → ⋮ → **Custom repositories**
-2. Add `https://github.com/nuggetz/ha-outdoor-environment` → category **Integration**
-3. Install **Outdoor Environment** and restart Home Assistant
+Outdoor Environment is part of the **HACS default store** — no custom repository needed.
 
-### Manual
+1. Open **HACS** in Home Assistant
+2. Search for **Outdoor Environment**
+3. **Download**, then restart Home Assistant
+4. Go to **Settings → Devices & Services → Add Integration → Outdoor Environment**
+
+[![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=nuggetz&repository=ha-outdoor-environment&category=integration)
+
+### Manual (only if you don't run HACS)
 
 Copy `custom_components/outdoor_environment/` to your HA `custom_components/` directory and restart.
 
