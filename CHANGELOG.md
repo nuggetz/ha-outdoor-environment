@@ -1,0 +1,78 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.2] - 2026-08-19
+
+### Fixed
+
+- **`Dominant Pollutant` failed to start and errored on every update.** The sensor
+  reports which pollutant drives the European AQI, so its value is a name such as
+  `o3` — but it inherited `state_class: measurement` from its base class, which
+  tells Home Assistant to expect a number. Home Assistant rejected the state with
+  `ValueError: ... it has the non-numeric value`, the entity was never added, and
+  the error repeated on every air-quality and weather coordinator refresh. This
+  affected every installation that receives European sub-AQI data, in the default
+  configuration. The sensor now declares `device_class: enum`.
+- **`Lightning Risk` had the same defect.** It returns `none`/`low`/`medium`/`high`
+  and carried the same inherited `state_class`. It did not surface in logs only
+  because the entity is disabled by default; enabling it produced an identical
+  failure. It now declares `device_class: enum`.
+- **`Frost Risk` and `Irrigation Needed` no longer claim to be measurements.**
+  Both return a boolean. Home Assistant accepted these without error — a `bool`
+  is a subclass of `int` — but recorded them as the literal states `True`/`False`
+  and then silently discarded them from long-term statistics, so these sensors
+  never produced usable history. They no longer declare a `state_class`.
+
+### Changed
+
+- `state_class` is no longer set on the shared base class for derived sensors.
+  Each numeric sensor now declares it explicitly, so a non-numeric sensor can no
+  longer inherit an incorrect one by accident. No numeric sensor changed value,
+  unit, `unique_id` or `entity_id`.
+
+### Added
+
+- Platform-level tests that set the integration up inside Home Assistant and
+  assert every entity — including those disabled by default — writes a valid
+  state. The previous tests exercised `native_value` directly, one layer below
+  where Home Assistant validates state, so they could not detect these failures.
+
+### Documentation
+
+- README updated for availability in the HACS default store: installation no
+  longer requires adding a custom repository, plus HACS and My Home Assistant
+  badges and a social preview image.
+
+## [0.1.1] - 2026-05-24
+
+### Fixed
+
+- Compatibility with current Home Assistant releases: corrected `SensorDeviceClass`
+  attribute names and replaced `UnitOfPressure.KILOPASCAL` with `UnitOfPressure.KPA`.
+- `manifest.json` key ordering and other issues reported by hassfest and HACS
+  validation.
+
+### Added
+
+- Branding: repository header image, integration icon, README heading.
+
+## [0.1.0] - 2026-05-22
+
+### Added
+
+- Initial release. Home Assistant custom integration exposing 80+ outdoor
+  environment sensors from the free Open-Meteo APIs, with no API key required:
+  air quality and per-pollutant sub-AQI (EU and US), pollen, UV, weather,
+  agrometeorology, solar radiation including optional Global Tilted Irradiance,
+  and calculated sensors such as comfort index, ventilation score and heat index.
+- Dual coordinator design: air quality polled hourly, weather every 15 minutes,
+  so a failure in one API does not affect the other.
+- Config flow with per-group enable switches and configurable update intervals.
+
+[0.1.2]: https://github.com/nuggetz/ha-outdoor-environment/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/nuggetz/ha-outdoor-environment/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/nuggetz/ha-outdoor-environment/releases/tag/v0.1.0
