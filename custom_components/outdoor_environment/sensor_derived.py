@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from homeassistant.components.sensor import SensorEntity, SensorStateClass
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -13,6 +17,7 @@ from .const import (
     CONF_IRRIGATION_THRESHOLD,
     DEFAULT_IRRIGATION_THRESHOLD_MM,
     DOMAIN,
+    EU_SUB_AQI_KEYS,
     calc_ventilation_score,
     get_dominant_eu_pollutant,
     get_pollen_risk,
@@ -40,8 +45,11 @@ class OutdoorDerivedSensor(SensorEntity):
 
     _attr_has_entity_name = True
     _attr_attribution = ATTRIBUTION
-    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_should_poll = False
+    # NOTE: state_class is deliberately NOT set on the base class. Not every
+    # derived sensor is numeric, and declaring MEASUREMENT here made HA expect
+    # a number from every subclass — non-numeric ones raised ValueError when
+    # their state was written. Numeric subclasses opt in individually.
 
     def __init__(self, entry: ConfigEntry) -> None:
         self._entry = entry
@@ -75,6 +83,7 @@ class OutdoorDerivedSensor(SensorEntity):
 
 class ComfortIndexSensor(OutdoorDerivedSensor):
     _attr_name = "Comfort Index"
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = None
     _attr_entity_registry_enabled_default = True
 
@@ -104,6 +113,7 @@ class ComfortIndexSensor(OutdoorDerivedSensor):
 
 class HeatIndexSensor(OutdoorDerivedSensor):
     _attr_name = "Heat Index"
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "°C"
     _attr_entity_registry_enabled_default = True
 
@@ -125,6 +135,7 @@ class HeatIndexSensor(OutdoorDerivedSensor):
 
 class WindChillSensor(OutdoorDerivedSensor):
     _attr_name = "Wind Chill"
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "°C"
     _attr_entity_registry_enabled_default = True
 
@@ -146,6 +157,8 @@ class WindChillSensor(OutdoorDerivedSensor):
 
 class DominantPollutantSensor(OutdoorDerivedSensor):
     _attr_name = "Dominant Pollutant"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = list(EU_SUB_AQI_KEYS.values())
     _attr_native_unit_of_measurement = None
     _attr_entity_registry_enabled_default = True
 
@@ -161,6 +174,7 @@ class DominantPollutantSensor(OutdoorDerivedSensor):
 
 class PollenTotalRiskSensor(OutdoorDerivedSensor):
     _attr_name = "Pollen Total Risk"
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = None
     _attr_entity_registry_enabled_default = True
 
@@ -192,6 +206,7 @@ class PollenTotalRiskSensor(OutdoorDerivedSensor):
 
 class VentilationScoreSensor(OutdoorDerivedSensor):
     _attr_name = "Ventilation Score"
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = None
     _attr_entity_registry_enabled_default = True
 
@@ -226,6 +241,7 @@ class VentilationScoreSensor(OutdoorDerivedSensor):
 
 class SolarProductionFactorSensor(OutdoorDerivedSensor):
     _attr_name = "Solar Production Factor"
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = None
     _attr_entity_registry_enabled_default = True
 
@@ -245,6 +261,10 @@ class SolarProductionFactorSensor(OutdoorDerivedSensor):
 
 class IrrigationNeededSensor(OutdoorDerivedSensor):
     _attr_name = "Irrigation Needed"
+    # No state_class: native_value is a bool, which HA would accept as
+    # numeric (bool subclasses int) but then record as 'True'/'False' and
+    # silently drop from long-term statistics. Scheduled to move to the
+    # binary_sensor platform in 0.2.0 (breaking change on entity_id).
     _attr_native_unit_of_measurement = None
     _attr_entity_registry_enabled_default = False
 
@@ -284,6 +304,10 @@ class IrrigationNeededSensor(OutdoorDerivedSensor):
 
 class FrostRiskSensor(OutdoorDerivedSensor):
     _attr_name = "Frost Risk"
+    # No state_class: native_value is a bool, which HA would accept as
+    # numeric (bool subclasses int) but then record as 'True'/'False' and
+    # silently drop from long-term statistics. Scheduled to move to the
+    # binary_sensor platform in 0.2.0 (breaking change on entity_id).
     _attr_native_unit_of_measurement = None
     _attr_entity_registry_enabled_default = False
 
@@ -303,6 +327,8 @@ class FrostRiskSensor(OutdoorDerivedSensor):
 
 class LightningRiskSensor(OutdoorDerivedSensor):
     _attr_name = "Lightning Risk"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["none", "low", "medium", "high"]
     _attr_native_unit_of_measurement = None
     _attr_entity_registry_enabled_default = False
 
