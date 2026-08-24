@@ -31,6 +31,25 @@ CONF_ENABLE_GROUP_A_SUB_US = "enable_group_a_sub_us"
 CONF_ENABLE_GROUP_A_EXTRA = "enable_group_a_extra"
 CONF_ENABLE_GROUP_D_AGRO = "enable_group_d_agro"
 
+
+def get_api_demand(cfg: dict[str, object]) -> tuple[bool, bool]:
+    """Return whether the AQ and weather APIs are required by configured groups."""
+    demand_aq = bool(
+        cfg.get(CONF_ENABLE_AIR_QUALITY, True)
+        or cfg.get(CONF_ENABLE_GROUP_A_SUB, False)
+        or cfg.get(CONF_ENABLE_GROUP_A_SUB_US, False)
+        or cfg.get(CONF_ENABLE_GROUP_A_EXTRA, False)
+        or cfg.get(CONF_ENABLE_POLLEN, True)
+        or cfg.get(CONF_ENABLE_UV, True)
+    )
+    demand_weather = bool(
+        cfg.get(CONF_ENABLE_WEATHER, True)
+        or cfg.get(CONF_ENABLE_SOLAR, True)
+        or cfg.get(CONF_ENABLE_GROUP_D_AGRO, False)
+    )
+    return demand_aq, demand_weather
+
+
 # Attribution
 ATTRIBUTION = "Data provided by Open-Meteo (CC BY 4.0)"
 

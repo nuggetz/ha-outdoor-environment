@@ -77,6 +77,8 @@ Go to **Settings → Devices & Services → Add Integration → Outdoor Environm
 
 All settings are adjustable later via **Configure** (options flow), including update intervals, irrigation threshold, and advanced sensor groups.
 
+> Runtime polling is conditional: if no enabled sensor group depends on an Open-Meteo API, that API stays idle and no startup or periodic refresh is triggered.
+
 ---
 
 ## Automation examples

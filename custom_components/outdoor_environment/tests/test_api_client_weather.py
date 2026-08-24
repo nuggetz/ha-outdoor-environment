@@ -30,6 +30,19 @@ def session() -> MagicMock:
 
 
 @pytest.mark.asyncio
+async def test_fetch_returns_weather_payload(session, wx_response):
+    session.get.return_value = _make_response(wx_response)
+    client = WeatherApiClient(session, 45.46, 9.19)
+    result = await client.fetch()
+
+    assert result["temperature_2m"] == 22.5
+    assert result["weather_code"] == 2.0
+    params = session.get.call_args.kwargs["params"]
+    assert params["latitude"] == 45.46
+    assert params["longitude"] == 9.19
+
+
+@pytest.mark.asyncio
 async def test_fetch_without_gti(session, wx_response):
     session.get.return_value = _make_response(wx_response)
     client = WeatherApiClient(session, 45.46, 9.19)
@@ -38,7 +51,6 @@ async def test_fetch_without_gti(session, wx_response):
     assert result["temperature_2m"] == 22.5
     assert "global_tilted_irradiance" not in result
 
-    # Verify GTI params were NOT added to the URL
     call_kwargs = session.get.call_args
     params = call_kwargs[1].get("params", call_kwargs[0][1] if len(call_kwargs[0]) > 1 else {})
     assert "tilt" not in str(params)

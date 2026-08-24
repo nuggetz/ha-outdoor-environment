@@ -1,6 +1,8 @@
 """Tests for derived sensor calculations (pure functions and sensor values)."""
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 import pytest
 
 from custom_components.outdoor_environment.const import (
@@ -11,10 +13,12 @@ from custom_components.outdoor_environment.const import (
 )
 from custom_components.outdoor_environment.sensor_derived import (
     ComfortIndexSensor,
+    DominantPollutantSensor,
     FrostRiskSensor,
     HeatIndexSensor,
     IrrigationNeededSensor,
     LightningRiskSensor,
+    PollenTotalRiskSensor,
     SolarProductionFactorSensor,
     VentilationScoreSensor,
     WindChillSensor,
@@ -201,6 +205,60 @@ def test_derived_sensors_partial_data_aq_only():
     entry = _make_entry({"european_aqi": 30.0}, {})
     heat = HeatIndexSensor(entry)
     assert heat.native_value is None  # depends on weather data
+
+
+@pytest.mark.parametrize(
+    ("aq_data", "expected"),
+    [
+        ({"grass_pollen": 0.0, "birch_pollen": 0.0}, 0),
+        ({"grass_pollen": 0.0, "birch_pollen": None}, 0),
+        ({"grass_pollen": None, "birch_pollen": None}, None),
+        ({}, None),
+    ],
+)
+def test_pollen_total_risk_zero_and_missing_values(aq_data, expected):
+    entry = _make_entry(aq_data, {})
+    sensor = PollenTotalRiskSensor(entry)
+    assert sensor.native_value == expected
+
+
+@pytest.mark.parametrize(
+    ("sensor_cls", "expected_aq", "expected_weather"),
+    [
+        (ComfortIndexSensor, 0, 1),
+        (DominantPollutantSensor, 1, 0),
+        (VentilationScoreSensor, 1, 1),
+    ],
+)
+@pytest.mark.asyncio
+async def test_derived_sensors_only_subscribe_to_used_coordinators(
+    sensor_cls,
+    expected_aq,
+    expected_weather,
+):
+    from custom_components.outdoor_environment import OutdoorEnvironmentData
+
+    aq = MagicMock()
+    weather = MagicMock()
+    aq.async_add_listener = MagicMock(return_value=lambda: None)
+    weather.async_add_listener = MagicMock(return_value=lambda: None)
+
+    entry = MagicMock()
+    entry.entry_id = "test_entry"
+    entry.title = "Outdoor Environment"
+    entry.runtime_data = OutdoorEnvironmentData(
+        coordinator_aq=aq,
+        coordinator_weather=weather,
+    )
+    entry.data = {}
+    entry.options = {}
+
+    sensor = sensor_cls(entry)
+    sensor.async_on_remove = MagicMock()
+    await sensor.async_added_to_hass()
+
+    assert aq.async_add_listener.call_count == expected_aq
+    assert weather.async_add_listener.call_count == expected_weather
 
 
 def test_irrigation_needed_true():

@@ -44,6 +44,7 @@ from .const import (
     WMO_DESCRIPTIONS,
     get_aqi_eu_category,
     get_aqi_us_category,
+    get_api_demand,
     get_dominant_eu_pollutant,
     get_pollen_risk,
     get_uv_category,
@@ -483,6 +484,7 @@ async def async_setup_entry(
     weather = runtime.coordinator_weather
 
     cfg = {**entry.data, **entry.options}
+    demand_aq, demand_weather = get_api_demand(cfg)
     lat: float = entry.data.get("latitude", 0.0)
     lon: float = entry.data.get("longitude", 0.0)
     in_europe = is_europe(lat, lon)
@@ -541,6 +543,6 @@ async def async_setup_entry(
             entities.append(GtiSensor(weather, entry))
 
     # Group F — derived sensors
-    entities += create_derived_sensors(entry)
+    entities += create_derived_sensors(entry, cfg, demand_aq, demand_weather)
 
     async_add_entities(entities)
