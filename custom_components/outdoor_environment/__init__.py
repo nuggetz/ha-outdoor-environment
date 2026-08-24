@@ -48,8 +48,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry.data.get(CONF_WEATHER_UPDATE_INTERVAL, DEFAULT_WEATHER_UPDATE_MINUTES),
         )
     )
-    panel_tilt: float | None = entry.data.get(CONF_PANEL_TILT)
-    panel_azimuth: float | None = entry.data.get(CONF_PANEL_AZIMUTH)
+    cfg = {**entry.data, **entry.options}
+    panel_tilt: float | None = cfg.get(CONF_PANEL_TILT)
+    panel_azimuth: float | None = cfg.get(CONF_PANEL_AZIMUTH)
 
     coordinator_aq = AirQualityCoordinator(hass, lat, lon, aq_interval)
     coordinator_weather = WeatherCoordinator(

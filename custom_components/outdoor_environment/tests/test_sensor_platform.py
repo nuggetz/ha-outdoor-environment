@@ -152,6 +152,71 @@ async def test_default_config_adds_every_entity_without_error(
         assert hass.states.get(entity_id) is not None, f"{entity_id} has no state"
 
 
+async def test_panel_tilt_options_are_merged_and_reloaded(
+    hass, mock_config_entry, aq_response, wx_response_gti
+):
+    """Non-default panel settings must be merged into setup and reloads."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Outdoor Environment",
+        data={
+            "name": "Outdoor Environment",
+            "latitude": 45.46,
+            "longitude": 9.19,
+            "use_home_location": True,
+            "enable_air_quality": True,
+            "enable_pollen": True,
+            "enable_uv": True,
+            "enable_weather": True,
+            "enable_solar": True,
+        },
+        options={},
+    )
+    entry.add_to_hass(hass)
+
+    seen_panel_values: list[tuple[float | None, float | None]] = []
+
+    async def _mock_weather_fetch(self):
+        seen_panel_values.append((self._panel_tilt, self._panel_azimuth))
+        return _floats(wx_response_gti["current"])
+
+    with patch(_AQ_PATH, return_value=_floats(aq_response["current"])), patch(
+        "custom_components.outdoor_environment.api_client_weather.WeatherApiClient.fetch",
+        new=_mock_weather_fetch,
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+        assert seen_panel_values[0] == (None, None)
+        registry = er.async_get(hass)
+        assert not any(
+            entity.config_entry_id == entry.entry_id
+            and entity.unique_id == f"{entry.entry_id}_global_tilted_irradiance"
+            for entity in registry.entities.values()
+        )
+
+        hass.config_entries.async_update_entry(
+            entry,
+            options={"panel_tilt": 30.0, "panel_azimuth": 0.0},
+        )
+        await hass.async_block_till_done()
+
+        assert seen_panel_values[-1] == (30.0, 0.0)
+        assert any(
+            entity.config_entry_id == entry.entry_id
+            and entity.unique_id == f"{entry.entry_id}_global_tilted_irradiance"
+            for entity in er.async_get(hass).entities.values()
+        )
+
+        hass.config_entries.async_update_entry(
+            entry,
+            options={"panel_tilt": 45.0, "panel_azimuth": 135.0},
+        )
+        await hass.async_block_till_done()
+
+        assert seen_panel_values[-1] == (45.0, 135.0)
+
+
 async def test_every_entity_including_disabled_writes_a_state(
     hass, entry_all_groups, aq_response, caplog
 ):

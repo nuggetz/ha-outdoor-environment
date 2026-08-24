@@ -448,8 +448,9 @@ class GtiSensor(
         entry: ConfigEntry,
     ) -> None:
         super().__init__(coordinator)
-        self._panel_tilt: float = entry.data[CONF_PANEL_TILT]
-        self._panel_azimuth: float = entry.data.get(CONF_PANEL_AZIMUTH, 0.0)
+        cfg = {**entry.data, **entry.options}
+        self._panel_tilt: float = cfg[CONF_PANEL_TILT]
+        self._panel_azimuth: float = cfg.get(CONF_PANEL_AZIMUTH, 0.0)
         self._attr_unique_id = f"{entry.entry_id}_global_tilted_irradiance"
         self._attr_device_info = _device_info(entry)
 
@@ -536,7 +537,7 @@ async def async_setup_entry(
     # Group E — solar
     if cfg.get(CONF_ENABLE_SOLAR, True):
         entities += [OutdoorEnvironmentSensor(weather, entry, d) for d in SOLAR_SENSORS]
-        if entry.data.get(CONF_PANEL_TILT) is not None:
+        if cfg.get(CONF_PANEL_TILT) is not None:
             entities.append(GtiSensor(weather, entry))
 
     # Group F — derived sensors
