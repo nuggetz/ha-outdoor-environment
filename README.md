@@ -32,12 +32,19 @@ A Home Assistant custom integration that exposes **80+ outdoor environment senso
 | **A-sub — EU sub-AQI** | EU sub-AQI per pollutant (PM2.5, PM10, NO₂, O₃, SO₂) | ⬜ |
 | **A-sub-us — US sub-AQI** | US sub-AQI per pollutant (PM2.5, PM10, NO₂, CO, O₃, SO₂) | ⬜ |
 | **A-extra — Advanced** | Formaldehyde, glyoxal, NO, PAN, sea salt aerosol | ⬜ |
-| **B — Pollen** | Grass, birch, alder, olive, ragweed, mugwort | ⬜ |
+| **B — Pollen** | Grass, birch, alder, olive, ragweed, mugwort | 🌍 |
 | **C — UV** | UV Index, UV Index Clear Sky | ✅ |
 | **D — Weather** | Temperature, humidity, apparent temp, dew point, precipitation, wind, cloud cover, visibility, pressure, weather code | ✅ |
 | **D-agro — Agro** | Evapotranspiration (ET0), VPD, CAPE, wet bulb temperature | ⬜ |
 | **E — Solar** | GHI, direct, diffuse, DNI, terrestrial radiation, GTI (optional) | ✅ |
-| **F — Derived** | Comfort index, heat index, wind chill, dominant pollutant, pollen risk, ventilation score, solar production factor, irrigation needed, frost risk, lightning risk | ✅/⬜ |
+| **F — Derived** | Comfort index, heat index, wind chill, dominant pollutant, pollen risk, ventilation score, solar production factor, irrigation needed, frost risk, lightning risk | ⚙️ |
+
+✅ enabled by default · ⬜ available, disabled by default · 🌍 enabled by default only for
+locations inside Europe, where Open-Meteo publishes pollen data · ⚙️ derived from the groups
+above: each sensor exists when the group it reads from is enabled, and a few are disabled by
+default because they are niche.
+
+Everything is available regardless — a disabled group is one switch away in **Configure**.
 
 ---
 
