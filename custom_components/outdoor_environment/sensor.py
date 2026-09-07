@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any
 
@@ -14,6 +15,7 @@ from homeassistant.const import (
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
+    Platform,
     UnitOfIrradiance,
     UnitOfLength,
     UnitOfPressure,
@@ -22,6 +24,7 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -53,6 +56,8 @@ from .const import (
 from .coordinator_aq import AirQualityCoordinator
 from .coordinator_weather import WeatherCoordinator
 from .sensor_derived import create_derived_sensors
+
+_LOGGER = logging.getLogger(__name__)
 
 _COORDINATOR_AQ = "aq"
 _COORDINATOR_WEATHER = "weather"
@@ -473,6 +478,36 @@ class GtiSensor(
 # Platform setup
 # ---------------------------------------------------------------------------
 
+def _async_remove_stale_entities(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    entities: list[SensorEntity],
+) -> None:
+    """Drop registry entries for sensors this configuration no longer provides.
+
+    Disabling a sensor group stops the matching entities from being created, but
+    the registry keeps its rows, so they linger as `unavailable` forever. Anything
+    registered to this entry whose unique_id is not in the set we are about to add
+    is stale by definition.
+
+    Only the sensor domain is touched: other platforms clean up after themselves.
+    """
+    registry = er.async_get(hass)
+    expected = {entity.unique_id for entity in entities}
+
+    for registry_entry in er.async_entries_for_config_entry(registry, entry.entry_id):
+        if registry_entry.domain != Platform.SENSOR:
+            continue
+        if registry_entry.unique_id in expected:
+            continue
+        _LOGGER.debug(
+            "Removing stale entity %s (unique_id=%s): no longer provided by this configuration",
+            registry_entry.entity_id,
+            registry_entry.unique_id,
+        )
+        registry.async_remove(registry_entry.entity_id)
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -545,4 +580,5 @@ async def async_setup_entry(
     # Group F — derived sensors
     entities += create_derived_sensors(entry, cfg, demand_aq, demand_weather)
 
+    _async_remove_stale_entities(hass, entry, entities)
     async_add_entities(entities)

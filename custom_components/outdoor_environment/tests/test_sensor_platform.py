@@ -329,6 +329,84 @@ async def test_boolean_sensors_carry_no_state_class(
     assert state.attributes.get("state_class") is None
 
 
+async def test_stale_sensor_entities_are_removed_from_the_registry(
+    hass, mock_config_entry, aq_response, wx_response
+):
+    """A sensor this configuration no longer provides must not linger as unavailable."""
+    mock_config_entry.add_to_hass(hass)
+    registry = er.async_get(hass)
+    stale = registry.async_get_or_create(
+        "sensor",
+        DOMAIN,
+        f"{mock_config_entry.entry_id}_retired_sensor",
+        config_entry=mock_config_entry,
+    )
+
+    with _patched_apis(_floats(aq_response["current"]), _floats(wx_response["current"])):
+        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert registry.async_get(stale.entity_id) is None
+    assert _entity_ids(hass, mock_config_entry), "cleanup must not empty the registry"
+
+
+async def test_cleanup_leaves_other_platforms_alone(
+    hass, mock_config_entry, aq_response, wx_response
+):
+    """Only the sensor domain is ours to prune — 0.3.0 adds binary_sensor entities."""
+    mock_config_entry.add_to_hass(hass)
+    registry = er.async_get(hass)
+    other_domain = registry.async_get_or_create(
+        "binary_sensor",
+        DOMAIN,
+        f"{mock_config_entry.entry_id}_frost_risk",
+        config_entry=mock_config_entry,
+    )
+
+    with _patched_apis(_floats(aq_response["current"]), _floats(wx_response["current"])):
+        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert registry.async_get(other_domain.entity_id) is not None
+
+
+async def test_disabling_a_group_prunes_only_that_group(
+    hass, mock_config_entry, aq_response, wx_response
+):
+    """Turning a group off removes its entities and leaves the others in place."""
+    mock_config_entry.add_to_hass(hass)
+
+    def _has(unique_id: str) -> bool:
+        return any(
+            entity.config_entry_id == mock_config_entry.entry_id
+            and entity.unique_id == unique_id
+            for entity in er.async_get(hass).entities.values()
+        )
+
+    weather_uid = f"{mock_config_entry.entry_id}_temperature_2m"
+    aq_uid = f"{mock_config_entry.entry_id}_european_aqi"
+
+    with _patched_apis(_floats(aq_response["current"]), _floats(wx_response["current"])):
+        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+
+        assert _has(weather_uid)
+        assert _has(aq_uid)
+
+        hass.config_entries.async_update_entry(
+            mock_config_entry,
+            options={
+                "enable_weather": False,
+                "enable_solar": False,
+                "enable_group_d_agro": False,
+            },
+        )
+        await hass.async_block_till_done()
+
+    assert not _has(weather_uid)
+    assert _has(aq_uid)
+
+
 def test_every_derived_sensor_is_covered_by_this_module():
     """Guard: a new derived sensor must not silently escape platform testing."""
     from custom_components.outdoor_environment import sensor_derived
