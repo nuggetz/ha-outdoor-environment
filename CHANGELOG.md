@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.2.0] - 2026-09-07
 
 ### Fixed
 
@@ -112,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so a failure in one API does not affect the other.
 - Config flow with per-group enable switches and configurable update intervals.
 
+[0.2.0]: https://github.com/nuggetz/ha-outdoor-environment/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/nuggetz/ha-outdoor-environment/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/nuggetz/ha-outdoor-environment/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/nuggetz/ha-outdoor-environment/releases/tag/v0.1.0
