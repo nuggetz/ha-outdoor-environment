@@ -9,23 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Adding a `panel_tilt` will automatically enabled GTI.**
-- **PollenTotalRisk now reports unknown for missing values.** Pollen
-  values are only available for EU locations, enabling Group B Pollen
-  in a non-EU location will cause PollenTotalRisk to report `unknown`
-  and not `0.`
+- **Solar panel settings had no effect unless entered during initial setup.**
+  `panel_tilt` and `panel_azimuth` were read from the config entry data only, so
+  setting a tilt afterwards through **Configure** never created the Global
+  Tilted Irradiance sensor. Both values are now read from the options as well.
+  ([@bexelbie](https://github.com/bexelbie))
+- **`Pollen Total Risk` reported `0` when it had no pollen data at all.**
+  Open-Meteo publishes pollen only for European locations, so enabling Group B
+  anywhere else produced a confident "no risk" reading built on no readings. The
+  sensor now reports `unknown` when every pollen value is missing, and continues
+  to report `0` when the values are present and genuinely zero.
+  ([@bexelbie](https://github.com/bexelbie))
 
 ### Changed
 
-- **Open-Meteo polling more efficient.** Polling of the weather and
-  air quality APIs is only done when there is demand for data from
-  your system in the form of active sensors.  For example, if you
-  disable all weather sensors, the weather api will no longer be
-  polled.
-- **Derived sensors gated on data availability.** Derived sensors
-  are only automatically enabled when the API they require is already
-  being polled.  Manually enabled a derived sensor will trigger
-  polling demand.
+- **Each Open-Meteo API is polled only if an enabled sensor group needs it.**
+  Both APIs were refreshed on every cycle regardless of configuration. The
+  enabled groups now decide: disable every group that depends on the weather
+  API and it is no longer contacted, neither at startup nor on the update
+  interval.
+  ([@bexelbie](https://github.com/bexelbie))
+- **Derived sensors are created only when the API they read is being polled.**
+  A calculated sensor is gated on the data it consumes rather than on the group
+  it belongs to, so an API that is never polled no longer produces entities that
+  could never hold a value. If you have disabled a whole group, some calculated
+  sensors will no longer be created.
+  ([@bexelbie](https://github.com/bexelbie))
 
 ## [0.1.2] - 2026-08-19
 
