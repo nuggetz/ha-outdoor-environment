@@ -35,6 +35,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   could never hold a value. If you have disabled a whole group, some calculated
   sensors will no longer be created.
   ([@bexelbie](https://github.com/bexelbie))
+- **Entities the configuration no longer provides are deleted from the entity
+  registry.** Disabling a sensor group stopped its entities from being created,
+  but the registry kept the rows, so they stayed `unavailable` forever with no
+  way out except deleting each one by hand. They are now removed at startup,
+  which is what Home Assistant's own integrations do. **Deleting a registry row
+  also deletes that entity's history and long-term statistics, and that cannot
+  be undone**: re-enabling the group creates the entities again, empty. Only the
+  `sensor` domain is touched.
 
 ## [0.1.2] - 2026-08-19
 
