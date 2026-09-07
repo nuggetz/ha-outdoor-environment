@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixed
+
+- **Adding a `panel_tilt` will automatically enabled GTI.**
+- **PollenTotalRisk now reports unknown for missing values.** Pollen
+  values are only available for EU locations, enabling Group B Pollen
+  in a non-EU location will cause PollenTotalRisk to report `unknown`
+  and not `0.`
+
+### Changed
+
+- **Open-Meteo polling more efficient.** Polling of the weather and
+  air quality APIs is only done when there is demand for data from
+  your system in the form of active sensors.  For example, if you
+  disable all weather sensors, the weather api will no longer be
+  polled.
+- **Derived sensors gated on data availability.** Derived sensors
+  are only automatically enabled when the API they require is already
+  being polled.  Manually enabled a derived sensor will trigger
+  polling demand.
+
 ## [0.1.2] - 2026-08-19
 
 ### Fixed

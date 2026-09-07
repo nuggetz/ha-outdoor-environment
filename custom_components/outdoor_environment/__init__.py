@@ -15,6 +15,7 @@ from .const import (
     DEFAULT_AQ_UPDATE_MINUTES,
     DEFAULT_WEATHER_UPDATE_MINUTES,
     DOMAIN,
+    get_api_demand,
 )
 from .coordinator_aq import AirQualityCoordinator
 from .coordinator_weather import WeatherCoordinator
@@ -32,40 +33,63 @@ class OutdoorEnvironmentData:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Outdoor Environment from a config entry."""
+    cfg = {**entry.data, **entry.options}
     lat: float = entry.data[CONF_LATITUDE]
     lon: float = entry.data[CONF_LONGITUDE]
 
+    demand_aq, demand_weather = get_api_demand(cfg)
+
     # Options take precedence over data for interval settings
-    aq_interval = int(
-        entry.options.get(
-            CONF_AQ_UPDATE_INTERVAL,
-            entry.data.get(CONF_AQ_UPDATE_INTERVAL, DEFAULT_AQ_UPDATE_MINUTES),
+    aq_interval = (
+        int(
+            cfg.get(
+                CONF_AQ_UPDATE_INTERVAL,
+                DEFAULT_AQ_UPDATE_MINUTES,
+            )
         )
+        if demand_aq
+        else None
     )
-    weather_interval = int(
-        entry.options.get(
-            CONF_WEATHER_UPDATE_INTERVAL,
-            entry.data.get(CONF_WEATHER_UPDATE_INTERVAL, DEFAULT_WEATHER_UPDATE_MINUTES),
+    weather_interval = (
+        int(
+            cfg.get(
+                CONF_WEATHER_UPDATE_INTERVAL,
+                DEFAULT_WEATHER_UPDATE_MINUTES,
+            )
         )
+        if demand_weather
+        else None
     )
-    cfg = {**entry.data, **entry.options}
+    coordinator_aq = AirQualityCoordinator(
+        hass,
+        lat,
+        lon,
+        aq_interval,
+        config_entry=entry,
+    )
     panel_tilt: float | None = cfg.get(CONF_PANEL_TILT)
     panel_azimuth: float | None = cfg.get(CONF_PANEL_AZIMUTH)
-
-    coordinator_aq = AirQualityCoordinator(hass, lat, lon, aq_interval)
     coordinator_weather = WeatherCoordinator(
-        hass, lat, lon, weather_interval, panel_tilt, panel_azimuth
+        hass,
+        lat,
+        lon,
+        weather_interval,
+        panel_tilt=panel_tilt,
+        panel_azimuth=panel_azimuth,
+        config_entry=entry,
     )
 
-    try:
-        await coordinator_aq.async_config_entry_first_refresh()
-    except Exception as err:
-        raise ConfigEntryNotReady(f"AQ API unavailable: {err}") from err
+    if demand_aq:
+        try:
+            await coordinator_aq.async_config_entry_first_refresh()
+        except Exception as err:
+            raise ConfigEntryNotReady(f"AQ API unavailable: {err}") from err
 
-    try:
-        await coordinator_weather.async_config_entry_first_refresh()
-    except Exception as err:
-        raise ConfigEntryNotReady(f"Weather API unavailable: {err}") from err
+    if demand_weather:
+        try:
+            await coordinator_weather.async_config_entry_first_refresh()
+        except Exception as err:
+            raise ConfigEntryNotReady(f"Weather API unavailable: {err}") from err
 
     entry.runtime_data = OutdoorEnvironmentData(
         coordinator_aq=coordinator_aq,

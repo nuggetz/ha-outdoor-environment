@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import timedelta
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -21,7 +22,9 @@ class AirQualityCoordinator(DataUpdateCoordinator[dict[str, float | None]]):
         hass: HomeAssistant,
         lat: float,
         lon: float,
-        update_interval_minutes: int = DEFAULT_AQ_UPDATE_MINUTES,
+        update_interval_minutes: int | None = DEFAULT_AQ_UPDATE_MINUTES,
+        *,
+        config_entry: ConfigEntry | None = None,
     ) -> None:
         self._client = AirQualityApiClient(
             async_get_clientsession(hass), lat, lon
@@ -30,7 +33,10 @@ class AirQualityCoordinator(DataUpdateCoordinator[dict[str, float | None]]):
             hass,
             _LOGGER,
             name="outdoor_environment_aq",
-            update_interval=timedelta(minutes=update_interval_minutes),
+            update_interval=(
+                None if update_interval_minutes is None else timedelta(minutes=update_interval_minutes)
+            ),
+            config_entry=config_entry,
         )
 
     async def _async_update_data(self) -> dict[str, float | None]:

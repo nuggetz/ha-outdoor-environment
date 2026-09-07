@@ -8,17 +8,18 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     ATTRIBUTION,
+    CONF_ENABLE_POLLEN,
     CONF_IRRIGATION_THRESHOLD,
     DEFAULT_IRRIGATION_THRESHOLD_MM,
     DOMAIN,
     EU_SUB_AQI_KEYS,
     calc_ventilation_score,
+    get_api_demand,
     get_dominant_eu_pollutant,
     get_pollen_risk,
     heat_index,
@@ -51,18 +52,18 @@ class OutdoorDerivedSensor(SensorEntity):
     # a number from every subclass — non-numeric ones raised ValueError when
     # their state was written. Numeric subclasses opt in individually.
 
-    def __init__(self, entry: ConfigEntry) -> None:
+    def __init__(self, entry: ConfigEntry, *, coordinator_types: tuple[str, ...]) -> None:
         self._entry = entry
+        self._coordinator_types = coordinator_types
         self._attr_device_info = _device_info(entry)
 
     async def async_added_to_hass(self) -> None:
         data: OutdoorEnvironmentData = self._entry.runtime_data
-        self.async_on_remove(
-            data.coordinator_aq.async_add_listener(self._handle_update)
-        )
-        self.async_on_remove(
-            data.coordinator_weather.async_add_listener(self._handle_update)
-        )
+        for coordinator_type in self._coordinator_types:
+            if coordinator_type == "aq":
+                self.async_on_remove(data.coordinator_aq.async_add_listener(self._handle_update))
+            elif coordinator_type == "weather":
+                self.async_on_remove(data.coordinator_weather.async_add_listener(self._handle_update))
 
     @callback
     def _handle_update(self) -> None:
@@ -88,7 +89,7 @@ class ComfortIndexSensor(OutdoorDerivedSensor):
     _attr_entity_registry_enabled_default = True
 
     def __init__(self, entry: ConfigEntry) -> None:
-        super().__init__(entry)
+        super().__init__(entry, coordinator_types=("weather",))
         self._attr_unique_id = f"{entry.entry_id}_comfort_index"
 
     @property
@@ -118,7 +119,7 @@ class HeatIndexSensor(OutdoorDerivedSensor):
     _attr_entity_registry_enabled_default = True
 
     def __init__(self, entry: ConfigEntry) -> None:
-        super().__init__(entry)
+        super().__init__(entry, coordinator_types=("weather",))
         self._attr_unique_id = f"{entry.entry_id}_heat_index"
 
     @property
@@ -140,7 +141,7 @@ class WindChillSensor(OutdoorDerivedSensor):
     _attr_entity_registry_enabled_default = True
 
     def __init__(self, entry: ConfigEntry) -> None:
-        super().__init__(entry)
+        super().__init__(entry, coordinator_types=("weather",))
         self._attr_unique_id = f"{entry.entry_id}_wind_chill"
 
     @property
@@ -163,7 +164,7 @@ class DominantPollutantSensor(OutdoorDerivedSensor):
     _attr_entity_registry_enabled_default = True
 
     def __init__(self, entry: ConfigEntry) -> None:
-        super().__init__(entry)
+        super().__init__(entry, coordinator_types=("aq",))
         self._attr_unique_id = f"{entry.entry_id}_dominant_pollutant"
 
     @property
@@ -189,18 +190,27 @@ class PollenTotalRiskSensor(OutdoorDerivedSensor):
     }
 
     def __init__(self, entry: ConfigEntry) -> None:
-        super().__init__(entry)
+        super().__init__(entry, coordinator_types=("aq",))
         self._attr_unique_id = f"{entry.entry_id}_pollen_total_risk"
 
     @property
     def native_value(self) -> int | None:
         aq = self._aq()
         max_level = 0
+        saw_numeric_reading = False
         for key, species in self._SPECIES_KEYS.items():
             val = aq.get(key)
-            if val is not None:
-                level = self._RISK_ORDER.get(get_pollen_risk(species, val), 0)
-                max_level = max(max_level, level)
+            if val is None:
+                continue
+            if not isinstance(val, (int, float)):
+                continue
+            saw_numeric_reading = True
+            if val == 0:
+                continue
+            level = self._RISK_ORDER.get(get_pollen_risk(species, val), 0)
+            max_level = max(max_level, level)
+        if not saw_numeric_reading:
+            return None
         return max_level
 
 
@@ -211,7 +221,7 @@ class VentilationScoreSensor(OutdoorDerivedSensor):
     _attr_entity_registry_enabled_default = True
 
     def __init__(self, entry: ConfigEntry) -> None:
-        super().__init__(entry)
+        super().__init__(entry, coordinator_types=("aq", "weather"))
         self._attr_unique_id = f"{entry.entry_id}_ventilation_score"
 
     @property
@@ -246,7 +256,7 @@ class SolarProductionFactorSensor(OutdoorDerivedSensor):
     _attr_entity_registry_enabled_default = True
 
     def __init__(self, entry: ConfigEntry) -> None:
-        super().__init__(entry)
+        super().__init__(entry, coordinator_types=("weather",))
         self._attr_unique_id = f"{entry.entry_id}_solar_production_factor"
 
     @property
@@ -269,7 +279,7 @@ class IrrigationNeededSensor(OutdoorDerivedSensor):
     _attr_entity_registry_enabled_default = False
 
     def __init__(self, entry: ConfigEntry) -> None:
-        super().__init__(entry)
+        super().__init__(entry, coordinator_types=("weather",))
         self._attr_unique_id = f"{entry.entry_id}_irrigation_needed"
         self._threshold: float = float(
             entry.options.get(
@@ -312,7 +322,7 @@ class FrostRiskSensor(OutdoorDerivedSensor):
     _attr_entity_registry_enabled_default = False
 
     def __init__(self, entry: ConfigEntry) -> None:
-        super().__init__(entry)
+        super().__init__(entry, coordinator_types=("weather",))
         self._attr_unique_id = f"{entry.entry_id}_frost_risk"
 
     @property
@@ -333,7 +343,7 @@ class LightningRiskSensor(OutdoorDerivedSensor):
     _attr_entity_registry_enabled_default = False
 
     def __init__(self, entry: ConfigEntry) -> None:
-        super().__init__(entry)
+        super().__init__(entry, coordinator_types=("weather",))
         self._attr_unique_id = f"{entry.entry_id}_lightning_risk"
 
     @property
@@ -356,17 +366,38 @@ class LightningRiskSensor(OutdoorDerivedSensor):
 # Factory
 # ---------------------------------------------------------------------------
 
-def create_derived_sensors(entry: ConfigEntry) -> list[SensorEntity]:
-    """Return all derived sensor instances for this config entry."""
-    return [
-        ComfortIndexSensor(entry),
-        HeatIndexSensor(entry),
-        WindChillSensor(entry),
-        DominantPollutantSensor(entry),
-        PollenTotalRiskSensor(entry),
-        VentilationScoreSensor(entry),
-        SolarProductionFactorSensor(entry),
-        IrrigationNeededSensor(entry),
-        FrostRiskSensor(entry),
-        LightningRiskSensor(entry),
-    ]
+def create_derived_sensors(
+    entry: ConfigEntry,
+    cfg: dict[str, Any],
+    demand_aq: bool | None = None,
+    demand_weather: bool | None = None,
+) -> list[SensorEntity]:
+    """Return derived sensors whose required input APIs are active."""
+    if demand_aq is None or demand_weather is None:
+        demand_aq, demand_weather = get_api_demand(cfg)
+
+    sensors: list[SensorEntity] = []
+
+    if demand_weather:
+        sensors.extend(
+            [
+                ComfortIndexSensor(entry),
+                HeatIndexSensor(entry),
+                WindChillSensor(entry),
+                FrostRiskSensor(entry),
+                LightningRiskSensor(entry),
+                IrrigationNeededSensor(entry),
+                SolarProductionFactorSensor(entry),
+            ]
+        )
+
+    if demand_aq and demand_weather:
+        sensors.append(VentilationScoreSensor(entry))
+
+    if demand_aq:
+        sensors.append(DominantPollutantSensor(entry))
+
+    if demand_aq and cfg.get(CONF_ENABLE_POLLEN, True):
+        sensors.append(PollenTotalRiskSensor(entry))
+
+    return sensors
