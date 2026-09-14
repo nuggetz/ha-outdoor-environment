@@ -19,6 +19,7 @@ from .const import (
     DOMAIN,
     EU_SUB_AQI_KEYS,
     calc_ventilation_score,
+    comfort_index,
     get_api_demand,
     get_dominant_eu_pollutant,
     get_pollen_risk,
@@ -94,22 +95,10 @@ class ComfortIndexSensor(OutdoorDerivedSensor):
 
     @property
     def native_value(self) -> float | None:
-        wx = self._wx()
-        temp = wx.get("temperature_2m")
-        humidity = wx.get("relative_humidity_2m")
-        wind = wx.get("wind_speed_10m")
-        if temp is None or humidity is None or wind is None:
+        apparent = self._wx().get("apparent_temperature")
+        if apparent is None:
             return None
-        if temp > 27 and humidity > 40:
-            raw = heat_index(temp, humidity)
-            # Normalise: HI 27-54°C → 0-100
-            return round(max(0.0, min(100.0, (raw - 27) / 27 * 100)), 1)
-        if temp < 10 and wind > 4.8:
-            raw = wind_chill(temp, wind)
-            # Normalise: WC -40-10°C → 0-100 (inverted: colder = worse)
-            return round(max(0.0, min(100.0, (raw + 40) / 50 * 100)), 1)
-        # Humidex range approximation
-        return round(max(0.0, min(100.0, 50.0 + (temp - 20) * 2 - (humidity - 50) * 0.3)), 1)
+        return round(comfort_index(apparent), 1)
 
 
 class HeatIndexSensor(OutdoorDerivedSensor):
