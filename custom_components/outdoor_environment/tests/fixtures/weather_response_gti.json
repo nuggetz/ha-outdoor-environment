@@ -41,5 +41,21 @@
     "direct_normal_irradiance": 620.0,
     "terrestrial_radiation": 680.0,
     "global_tilted_irradiance": 570.0
+  },
+  "daily_units": {
+    "time": "iso8601",
+    "et0_fao_evapotranspiration": "mm",
+    "precipitation_sum": "mm"
+  },
+  "daily": {
+    "time": [
+      "2026-09-14"
+    ],
+    "et0_fao_evapotranspiration": [
+      3.57
+    ],
+    "precipitation_sum": [
+      0.0
+    ]
   }
 }

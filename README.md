@@ -56,6 +56,14 @@ and it is defined at every temperature rather than only inside a band.
 `Heat Index` and `Wind Chill` remain separate entities in °C and are reported only in the
 conditions their formulas are valid for, so they are `unknown` the rest of the time.
 
+### Reading `Irrigation Needed`
+
+A day's water balance: it turns on when today's forecast evapotranspiration exceeds today's
+forecast rainfall by more than the threshold set in **Configure** (2 mm by default). Both
+figures are **totals for the whole calendar day, not what has fallen so far** — rain due this
+afternoon will keep the sensor off this morning, which is usually what you want from it, at the
+cost of moving with the forecast.
+
 ---
 
 ## Installation

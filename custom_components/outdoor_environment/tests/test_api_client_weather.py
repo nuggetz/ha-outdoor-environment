@@ -101,3 +101,34 @@ async def test_timeout_raises_cannot_connect(session):
     client = WeatherApiClient(session, 45.46, 9.19)
     with pytest.raises(CannotConnect):
         await client.fetch()
+
+
+@pytest.mark.asyncio
+async def test_fetch_requests_and_flattens_the_daily_block(session, wx_response):
+    """Irrigation Needed needs a day's totals, not the current 15-minute slice."""
+    session.get.return_value = _make_response(wx_response)
+    client = WeatherApiClient(session, 45.46, 9.19)
+    result = await client.fetch()
+
+    params = session.get.call_args.kwargs["params"]
+    assert params["daily"] == "et0_fao_evapotranspiration,precipitation_sum"
+    assert params["forecast_days"] == 1
+
+    # The daily figure is an order of magnitude above the current-interval one,
+    # and the two must not be confused for each other.
+    assert result["daily_et0_fao_evapotranspiration"] == 3.57
+    assert result["daily_precipitation_sum"] == 0.0
+    assert result["et0_fao_evapotranspiration"] != result["daily_et0_fao_evapotranspiration"]
+
+
+@pytest.mark.asyncio
+async def test_fetch_survives_a_missing_daily_block(session, wx_response):
+    """Every current-interval sensor must keep working without it."""
+    wx_response.pop("daily")
+    session.get.return_value = _make_response(wx_response)
+    client = WeatherApiClient(session, 45.46, 9.19)
+    result = await client.fetch()
+
+    assert result["temperature_2m"] == 22.5
+    assert result["daily_et0_fao_evapotranspiration"] is None
+    assert result["daily_precipitation_sum"] is None

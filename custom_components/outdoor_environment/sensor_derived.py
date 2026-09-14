@@ -277,27 +277,45 @@ class IrrigationNeededSensor(OutdoorDerivedSensor):
             )
         )
 
-    @property
-    def native_value(self) -> bool | None:
+    def _daily_balance(self) -> tuple[float, float] | None:
+        """Return today's (evapotranspiration, precipitation) totals in mm.
+
+        Both come from the API's daily block. The current block reports each
+        over its own 15-minute interval, and comparing that against a threshold
+        in millimetres per day is a comparison that can never be true — which is
+        why this sensor never once turned on before 0.2.2.
+        """
         wx = self._wx()
-        et0 = wx.get("et0_fao_evapotranspiration")
-        precip = wx.get("precipitation")
+        et0 = wx.get("daily_et0_fao_evapotranspiration")
+        precip = wx.get("daily_precipitation_sum")
         if et0 is None or precip is None:
             return None
+        return et0, precip
+
+    @property
+    def native_value(self) -> bool | None:
+        balance = self._daily_balance()
+        if balance is None:
+            return None
+        et0, precip = balance
         return (et0 - precip) > self._threshold
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        wx = self._wx()
-        et0 = wx.get("et0_fao_evapotranspiration")
-        precip = wx.get("precipitation")
-        if et0 is None or precip is None:
+        balance = self._daily_balance()
+        if balance is None:
             return {}
+        et0, precip = balance
         return {
             "et0_today": et0,
             "precipitation_today": precip,
             "deficit_mm": round(et0 - precip, 2),
             "threshold_mm": self._threshold,
+            # Both totals are forecasts for the whole calendar day, not what has
+            # accumulated so far. That is what an irrigation decision needs — rain
+            # due this afternoon should stop the sprinklers this morning — but it
+            # means the figures can be revised as the forecast changes.
+            "period": "today, full-day forecast",
         }
 
 

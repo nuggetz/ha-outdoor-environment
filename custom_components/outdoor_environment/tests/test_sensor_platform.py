@@ -92,6 +92,8 @@ _WX_EXTREMES: dict[str, float] = {
     "wet_bulb_temperature_2m": 1.0,
     "vapour_pressure_deficit": 0.1,
     "et0_fao_evapotranspiration": 5.0,
+    "daily_et0_fao_evapotranspiration": 5.0,
+    "daily_precipitation_sum": 0.0,
     "shortwave_radiation": 100.0,
     "direct_radiation": 50.0,
     "diffuse_radiation": 50.0,

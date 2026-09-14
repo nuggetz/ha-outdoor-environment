@@ -37,6 +37,20 @@ WEATHER_VARIABLES: list[str] = [
     "terrestrial_radiation",
 ]
 
+# Daily totals, fetched on the same call as the current block.
+#
+# The current block reports evapotranspiration over its own 15-minute interval,
+# which is roughly a hundredth of a day's worth. Comparing that against a
+# threshold expressed in millimetres per day can never be met, which is why
+# Irrigation Needed never once turned on. A day's water balance needs the daily
+# figures, so they are requested here and exposed under a "daily_" prefix to
+# keep them distinct from the current-interval keys of the same name.
+DAILY_VARIABLES: list[str] = [
+    "et0_fao_evapotranspiration",
+    "precipitation_sum",
+]
+DAILY_PREFIX = "daily_"
+
 
 class WeatherApiClient:
     """Async wrapper for the Open-Meteo Forecast API."""
@@ -65,6 +79,8 @@ class WeatherApiClient:
             "latitude": self._lat,
             "longitude": self._lon,
             "current": ",".join(variables),
+            "daily": ",".join(DAILY_VARIABLES),
+            "forecast_days": 1,
             "timezone": "auto",
             "wind_speed_unit": "kmh",
             "precipitation_unit": "mm",
@@ -92,8 +108,18 @@ class WeatherApiClient:
             raise InvalidResponse("missing 'current' field in response")
 
         current: dict[str, object] = data["current"]
-        return {
+        result: dict[str, float | None] = {
             key: (float(val) if val is not None else None)
             for key in variables
             if (val := current.get(key)) is not None or key in current
         }
+
+        # The daily block is a list per variable, one entry per forecast day.
+        # Only today is requested, so take the first. A missing block is not an
+        # error: every current-interval sensor still works without it.
+        daily: dict[str, object] = data.get("daily") or {}
+        for key in DAILY_VARIABLES:
+            values = daily.get(key)
+            value = values[0] if isinstance(values, list) and values else None
+            result[f"{DAILY_PREFIX}{key}"] = float(value) if value is not None else None
+        return result
