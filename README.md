@@ -37,7 +37,8 @@ A Home Assistant custom integration that exposes **80+ outdoor environment senso
 | **D — Weather** | Temperature, humidity, apparent temp, dew point, precipitation, wind, cloud cover, visibility, pressure, weather code | ✅ |
 | **D-agro — Agro** | Evapotranspiration (ET0), VPD, CAPE, wet bulb temperature | ⬜ |
 | **E — Solar** | GHI, direct, diffuse, DNI, terrestrial radiation, GTI (optional) | ✅ |
-| **F — Derived** | Comfort index, heat index, wind chill, dominant pollutant, pollen risk, ventilation score, solar production factor, irrigation needed, frost risk, lightning risk | ⚙️ |
+| **F — Derived** | Comfort index, heat index, wind chill, dominant pollutant, pollen risk, ventilation score, solar production factor, lightning risk | ⚙️ |
+| **F — Binary** | Irrigation needed, frost risk — on the `binary_sensor` platform | ⬜ |
 
 ✅ enabled by default · ⬜ available, disabled by default · 🌍 enabled by default only for
 locations inside Europe, where Open-Meteo publishes pollen data · ⚙️ derived from the groups
@@ -57,6 +58,10 @@ and it is defined at every temperature rather than only inside a band.
 conditions their formulas are valid for, so they are `unknown` the rest of the time.
 
 ### Reading `Irrigation Needed`
+
+A `binary_sensor`, not a sensor — it answers yes or no, so it can be used directly as an
+automation trigger. It carries no device class on purpose: the closest candidate, `moisture`,
+displays `on` as **Wet**, which is the opposite of what this entity means.
 
 A day's water balance: it turns on when today's forecast evapotranspiration exceeds today's
 forecast rainfall by more than the threshold set in **Configure** (2 mm by default). Both

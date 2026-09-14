@@ -23,7 +23,6 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -53,6 +52,7 @@ from .const import (
     get_uv_category,
     is_europe,
 )
+from .entity import device_info as _device_info
 from .coordinator_aq import AirQualityCoordinator
 from .coordinator_weather import WeatherCoordinator
 from .sensor_derived import create_derived_sensors
@@ -305,16 +305,6 @@ SOLAR_SENSORS: tuple[OutdoorSensorDescription, ...] = (
 # ---------------------------------------------------------------------------
 # Entity classes
 # ---------------------------------------------------------------------------
-
-def _device_info(entry: ConfigEntry) -> DeviceInfo:
-    return DeviceInfo(
-        identifiers={(DOMAIN, entry.entry_id)},
-        name=entry.title,
-        manufacturer="Open-Meteo",
-        model="Outdoor Environment",
-        configuration_url="https://open-meteo.com",
-    )
-
 
 class OutdoorEnvironmentSensor(
     CoordinatorEntity[AirQualityCoordinator | WeatherCoordinator],

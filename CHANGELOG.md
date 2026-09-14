@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **BREAKING: `Irrigation Needed` and `Frost Risk` moved to the `binary_sensor`
+  platform.** Their `entity_id` changes from `sensor.<name>_irrigation_needed`
+  and `sensor.<name>_frost_risk` to `binary_sensor.<name>_...`, and **the old
+  entities are deleted from the registry along with their history and long-term
+  statistics.** Any automation, script, dashboard card or template referencing
+  the old `entity_id` must be updated. Announced since 0.1.2.
+  Both wrote the strings `'True'` and `'False'` as sensor states — accepted,
+  because `bool` subclasses `int`, but dropped from long-term statistics and
+  awkward as an automation trigger.
+  `Frost Risk` gains `device_class: cold`, which Home Assistant displays as
+  **Cold** / **Normal**. `Irrigation Needed` deliberately carries **no device
+  class**: the nearest candidate, `moisture`, displays `on` as **Wet**, the
+  opposite of what the entity means, and `problem` frames routine watering as a
+  fault. It gets an icon instead.
+
 ## [0.2.2] - 2026-09-14
 
 ### Fixed

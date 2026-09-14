@@ -8,15 +8,9 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import callback
-from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import (
-    ATTRIBUTION,
     CONF_ENABLE_POLLEN,
-    CONF_IRRIGATION_THRESHOLD,
-    DEFAULT_IRRIGATION_THRESHOLD_MM,
-    DOMAIN,
     EU_SUB_AQI_KEYS,
     calc_ventilation_score,
     comfort_index,
@@ -27,56 +21,19 @@ from .const import (
     solar_production_factor,
     wind_chill,
 )
+from .entity import OutdoorComputedEntity
 
 if TYPE_CHECKING:
     from . import OutdoorEnvironmentData
 
 
-def _device_info(entry: ConfigEntry) -> DeviceInfo:
-    return DeviceInfo(
-        identifiers={(DOMAIN, entry.entry_id)},
-        name=entry.title,
-        manufacturer="Open-Meteo",
-        model="Outdoor Environment",
-        configuration_url="https://open-meteo.com",
-    )
-
-
-class OutdoorDerivedSensor(SensorEntity):
+class OutdoorDerivedSensor(OutdoorComputedEntity, SensorEntity):
     """Base class for computed sensors — no direct coordinator ownership."""
 
-    _attr_has_entity_name = True
-    _attr_attribution = ATTRIBUTION
-    _attr_should_poll = False
     # NOTE: state_class is deliberately NOT set on the base class. Not every
     # derived sensor is numeric, and declaring MEASUREMENT here made HA expect
     # a number from every subclass — non-numeric ones raised ValueError when
     # their state was written. Numeric subclasses opt in individually.
-
-    def __init__(self, entry: ConfigEntry, *, coordinator_types: tuple[str, ...]) -> None:
-        self._entry = entry
-        self._coordinator_types = coordinator_types
-        self._attr_device_info = _device_info(entry)
-
-    async def async_added_to_hass(self) -> None:
-        data: OutdoorEnvironmentData = self._entry.runtime_data
-        for coordinator_type in self._coordinator_types:
-            if coordinator_type == "aq":
-                self.async_on_remove(data.coordinator_aq.async_add_listener(self._handle_update))
-            elif coordinator_type == "weather":
-                self.async_on_remove(data.coordinator_weather.async_add_listener(self._handle_update))
-
-    @callback
-    def _handle_update(self) -> None:
-        self.async_write_ha_state()
-
-    def _aq(self) -> dict[str, float | None]:
-        data: OutdoorEnvironmentData = self._entry.runtime_data
-        return data.coordinator_aq.data or {}
-
-    def _wx(self) -> dict[str, float | None]:
-        data: OutdoorEnvironmentData = self._entry.runtime_data
-        return data.coordinator_weather.data or {}
 
 
 # ---------------------------------------------------------------------------
@@ -258,90 +215,6 @@ class SolarProductionFactorSensor(OutdoorDerivedSensor):
         return round(solar_production_factor(cloud, ghi), 3)
 
 
-class IrrigationNeededSensor(OutdoorDerivedSensor):
-    _attr_name = "Irrigation Needed"
-    # No state_class: native_value is a bool, which HA would accept as
-    # numeric (bool subclasses int) but then record as 'True'/'False' and
-    # silently drop from long-term statistics. Scheduled to move to the
-    # binary_sensor platform in 0.2.0 (breaking change on entity_id).
-    _attr_native_unit_of_measurement = None
-    _attr_entity_registry_enabled_default = False
-
-    def __init__(self, entry: ConfigEntry) -> None:
-        super().__init__(entry, coordinator_types=("weather",))
-        self._attr_unique_id = f"{entry.entry_id}_irrigation_needed"
-        self._threshold: float = float(
-            entry.options.get(
-                CONF_IRRIGATION_THRESHOLD,
-                entry.data.get(CONF_IRRIGATION_THRESHOLD, DEFAULT_IRRIGATION_THRESHOLD_MM),
-            )
-        )
-
-    def _daily_balance(self) -> tuple[float, float] | None:
-        """Return today's (evapotranspiration, precipitation) totals in mm.
-
-        Both come from the API's daily block. The current block reports each
-        over its own 15-minute interval, and comparing that against a threshold
-        in millimetres per day is a comparison that can never be true — which is
-        why this sensor never once turned on before 0.2.2.
-        """
-        wx = self._wx()
-        et0 = wx.get("daily_et0_fao_evapotranspiration")
-        precip = wx.get("daily_precipitation_sum")
-        if et0 is None or precip is None:
-            return None
-        return et0, precip
-
-    @property
-    def native_value(self) -> bool | None:
-        balance = self._daily_balance()
-        if balance is None:
-            return None
-        et0, precip = balance
-        return (et0 - precip) > self._threshold
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        balance = self._daily_balance()
-        if balance is None:
-            return {}
-        et0, precip = balance
-        return {
-            "et0_today": et0,
-            "precipitation_today": precip,
-            "deficit_mm": round(et0 - precip, 2),
-            "threshold_mm": self._threshold,
-            # Both totals are forecasts for the whole calendar day, not what has
-            # accumulated so far. That is what an irrigation decision needs — rain
-            # due this afternoon should stop the sprinklers this morning — but it
-            # means the figures can be revised as the forecast changes.
-            "period": "today, full-day forecast",
-        }
-
-
-class FrostRiskSensor(OutdoorDerivedSensor):
-    _attr_name = "Frost Risk"
-    # No state_class: native_value is a bool, which HA would accept as
-    # numeric (bool subclasses int) but then record as 'True'/'False' and
-    # silently drop from long-term statistics. Scheduled to move to the
-    # binary_sensor platform in 0.2.0 (breaking change on entity_id).
-    _attr_native_unit_of_measurement = None
-    _attr_entity_registry_enabled_default = False
-
-    def __init__(self, entry: ConfigEntry) -> None:
-        super().__init__(entry, coordinator_types=("weather",))
-        self._attr_unique_id = f"{entry.entry_id}_frost_risk"
-
-    @property
-    def native_value(self) -> bool | None:
-        wx = self._wx()
-        apparent = wx.get("apparent_temperature")
-        humidity = wx.get("relative_humidity_2m")
-        if apparent is None or humidity is None:
-            return None
-        return apparent < 2.0 and humidity > 80.0
-
-
 class LightningRiskSensor(OutdoorDerivedSensor):
     _attr_name = "Lightning Risk"
     _attr_device_class = SensorDeviceClass.ENUM
@@ -391,9 +264,7 @@ def create_derived_sensors(
                 ComfortIndexSensor(entry),
                 HeatIndexSensor(entry),
                 WindChillSensor(entry),
-                FrostRiskSensor(entry),
                 LightningRiskSensor(entry),
-                IrrigationNeededSensor(entry),
                 SolarProductionFactorSensor(entry),
             ]
         )

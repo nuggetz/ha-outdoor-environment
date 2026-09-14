@@ -248,8 +248,6 @@ async def test_every_entity_including_disabled_writes_a_state(
         # o3 has the highest EU sub-AQI (32) in the fixture, so it dominates.
         ("sensor.outdoor_environment_dominant_pollutant", "o3"),
         ("sensor.outdoor_environment_lightning_risk", "high"),
-        ("sensor.outdoor_environment_frost_risk", "True"),
-        ("sensor.outdoor_environment_irrigation_needed", "True"),
     ],
 )
 async def test_non_numeric_sensors_expose_their_value(
@@ -303,34 +301,6 @@ async def test_enum_sensors_declare_options_and_no_state_class(
     assert state.attributes.get("state_class") is None
 
 
-@pytest.mark.parametrize(
-    "entity_id",
-    [
-        "sensor.outdoor_environment_frost_risk",
-        "sensor.outdoor_environment_irrigation_needed",
-    ],
-)
-async def test_boolean_sensors_carry_no_state_class(
-    hass, entry_all_groups, aq_response, entity_id
-):
-    """Booleans must not claim to be measurements.
-
-    HA accepts a bool as numeric (bool subclasses int), so this never raised —
-    it silently produced 'True'/'False' states that the recorder then dropped
-    from long-term statistics. These move to binary_sensor in 0.2.0.
-    """
-    entry_all_groups.add_to_hass(hass)
-
-    with _patched_apis(_floats(aq_response["current"]), _WX_EXTREMES):
-        assert await hass.config_entries.async_setup(entry_all_groups.entry_id)
-        await hass.async_block_till_done()
-        await _enable_all_entities(hass, entry_all_groups)
-
-    state = hass.states.get(entity_id)
-    assert state is not None
-    assert state.attributes.get("state_class") is None
-
-
 async def test_stale_sensor_entities_are_removed_from_the_registry(
     hass, mock_config_entry, aq_response, wx_response
 ):
@@ -355,13 +325,19 @@ async def test_stale_sensor_entities_are_removed_from_the_registry(
 async def test_cleanup_leaves_other_platforms_alone(
     hass, mock_config_entry, aq_response, wx_response
 ):
-    """Only the sensor domain is ours to prune — 0.3.0 adds binary_sensor entities."""
+    """Each platform prunes only its own domain.
+
+    The row is planted in `switch`, a domain this integration never provides,
+    because both platforms we do provide now prune themselves: a stale row in
+    `binary_sensor` is removed by the binary_sensor platform, which would make
+    this test fail for a reason that has nothing to do with the sensor filter.
+    """
     mock_config_entry.add_to_hass(hass)
     registry = er.async_get(hass)
     other_domain = registry.async_get_or_create(
-        "binary_sensor",
+        "switch",
         DOMAIN,
-        f"{mock_config_entry.entry_id}_frost_risk",
+        f"{mock_config_entry.entry_id}_not_provided_by_any_platform",
         config_entry=mock_config_entry,
     )
 
@@ -421,8 +397,6 @@ def test_every_derived_sensor_is_covered_by_this_module():
         "PollenTotalRiskSensor",
         "VentilationScoreSensor",
         "SolarProductionFactorSensor",
-        "IrrigationNeededSensor",
-        "FrostRiskSensor",
         "LightningRiskSensor",
     }
     actual = {

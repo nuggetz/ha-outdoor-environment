@@ -20,7 +20,7 @@ from .const import (
 from .coordinator_aq import AirQualityCoordinator
 from .coordinator_weather import WeatherCoordinator
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
 
 
 @dataclass
