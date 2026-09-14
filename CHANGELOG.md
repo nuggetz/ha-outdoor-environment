@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **`Comfort Index` is now a single continuous measure instead of three
+  incompatible ones.** It switched formula at 27 °C, at 40% relative humidity and
+  at 10 °C with wind, and the three branches shared neither a scale nor a
+  direction — in one a higher number meant hotter and worse, in another warmer
+  and better. The value could fall from 64.9 to 0.9 across a tenth of a degree
+  and never had a defined meaning. It is now derived from apparent temperature
+  alone, on a documented scale where 100 is comfortable and 0 is dangerous:
+  100 between 18 °C and 24 °C apparent, falling to 0 at 40 °C and at −10 °C.
+  **Your recorded history is on the old scale and cannot be compared with the
+  new one**, and the direction is inverted relative to the old hot-weather
+  branch. The entity keeps its ID, so dashboards and automations still resolve —
+  check any threshold you set on it.
+  ([#12](https://github.com/nuggetz/ha-outdoor-environment/issues/12))
+
 ## [0.2.1] - 2026-09-14
 
 ### Fixed

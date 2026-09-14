@@ -103,26 +103,71 @@ def _make_entry(aq_data: dict, wx_data: dict, options: dict | None = None):
     return entry
 
 
-def test_comfort_index_high_temp_uses_heat_index():
-    entry = _make_entry(
-        {},
-        {"temperature_2m": 35.0, "relative_humidity_2m": 75.0, "wind_speed_10m": 5.0},
-    )
-    sensor = ComfortIndexSensor(entry)
-    val = sensor.native_value
-    assert val is not None
-    assert 0 <= val <= 100
+def _comfort(apparent, **extra):
+    entry = _make_entry({}, {"apparent_temperature": apparent, **extra})
+    return ComfortIndexSensor(entry).native_value
 
 
-def test_comfort_index_low_temp_wind_uses_wind_chill():
-    entry = _make_entry(
-        {},
-        {"temperature_2m": -2.0, "relative_humidity_2m": 60.0, "wind_speed_10m": 20.0},
-    )
-    sensor = ComfortIndexSensor(entry)
-    val = sensor.native_value
-    assert val is not None
-    assert 0 <= val <= 100
+def test_comfort_index_plateau_reads_full_marks():
+    """Anything inside the comfortable band is comfortable, with no false precision."""
+    assert _comfort(18.0) == 100
+    assert _comfort(21.0) == 100
+    assert _comfort(24.0) == 100
+
+
+def test_comfort_index_clamps_outside_both_limits():
+    assert _comfort(40.0) == 0
+    assert _comfort(55.0) == 0
+    assert _comfort(-10.0) == 0
+    assert _comfort(-30.0) == 0
+
+
+def test_comfort_index_falls_off_in_both_directions():
+    assert _comfort(32.0) == 50.0
+    assert _comfort(4.0) == 50.0
+    assert _comfort(27.0) > _comfort(32.0)
+    assert _comfort(10.0) > _comfort(4.0)
+
+
+def test_comfort_index_matches_the_value_promised_in_issue_12():
+    """The reporter was told their reading becomes 67.5 instead of 1.9."""
+    assert _comfort(29.2) == 67.5
+
+
+def test_comfort_index_is_continuous_over_the_whole_domain():
+    """The bug in issue #12 was a 64-point jump across a tenth of a degree.
+
+    Three formulas were switched between on hard thresholds, so the value leapt
+    at every boundary. Sweeping the domain in small steps asserts that no such
+    boundary exists any more, whatever the implementation.
+    """
+    previous = None
+    apparent = -30.0
+    while apparent <= 55.0:
+        value = _comfort(round(apparent, 2))
+        if previous is not None:
+            assert abs(value - previous) < 0.5, f"jump at {apparent}: {previous} -> {value}"
+        previous = value
+        apparent += 0.05
+
+
+def test_comfort_index_ignores_the_old_branch_thresholds():
+    """Same apparent temperature must give the same score, whatever else moves.
+
+    The old implementation switched formula at 27 C, at 40% humidity and at
+    10 C with wind, so these pairs straddle every one of those thresholds.
+    """
+    for apparent, low, high in (
+        (29.0, {"temperature_2m": 27.0, "relative_humidity_2m": 40.0, "wind_speed_10m": 4.8},
+                {"temperature_2m": 27.1, "relative_humidity_2m": 40.1, "wind_speed_10m": 4.9}),
+        (5.0, {"temperature_2m": 10.1, "relative_humidity_2m": 60.0, "wind_speed_10m": 4.0},
+               {"temperature_2m": 9.9, "relative_humidity_2m": 60.0, "wind_speed_10m": 20.0}),
+    ):
+        assert _comfort(apparent, **low) == _comfort(apparent, **high)
+
+
+def test_comfort_index_is_unknown_without_apparent_temperature():
+    assert _comfort(None) is None
 
 
 def test_heat_index_valid_conditions():

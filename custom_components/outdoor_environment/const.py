@@ -229,6 +229,41 @@ def wind_chill(temp: float, wind_speed_kmh: float) -> float:
     return 13.12 + 0.6215 * temp - 11.37 * (V**0.16) + 0.3965 * temp * (V**0.16)
 
 
+# Comfort index scale, in degrees of apparent temperature.
+#
+# 100 means comfortable, 0 means dangerous. Anything inside the plateau is
+# comfortable and reads 100; outside it the score falls linearly to 0 at either
+# limit. The limits are the points where exposure stops being a matter of taste:
+# roughly the onset of heat danger, and of frostbite risk in the cold.
+COMFORT_PLATEAU_LOW_C = 18.0
+COMFORT_PLATEAU_HIGH_C = 24.0
+COMFORT_HOT_LIMIT_C = 40.0
+COMFORT_COLD_LIMIT_C = -10.0
+
+
+def comfort_index(apparent_temperature: float) -> float:
+    """Return a 0-100 comfort score, 100 comfortable and 0 dangerous.
+
+    Built on apparent temperature because that single figure already folds in
+    humidity, wind and radiation — the three things the previous implementation
+    tried to capture with three separate formulas. Those formulas disagreed on
+    both scale and direction and were switched between on hard thresholds, so
+    the value jumped discontinuously and never meant one thing (issue #12).
+
+    One continuous function over the whole domain, so the score never jumps and
+    is defined at every temperature.
+    """
+    if apparent_temperature < COMFORT_PLATEAU_LOW_C:
+        span = COMFORT_PLATEAU_LOW_C - COMFORT_COLD_LIMIT_C
+        score = (apparent_temperature - COMFORT_COLD_LIMIT_C) / span * 100
+    elif apparent_temperature > COMFORT_PLATEAU_HIGH_C:
+        span = COMFORT_HOT_LIMIT_C - COMFORT_PLATEAU_HIGH_C
+        score = (COMFORT_HOT_LIMIT_C - apparent_temperature) / span * 100
+    else:
+        score = 100.0
+    return max(0.0, min(100.0, score))
+
+
 def solar_production_factor(cloud_cover: float, shortwave_radiation: float) -> float:
     return (1.0 - cloud_cover / 100.0) * min(shortwave_radiation / 1000.0, 1.0)
 

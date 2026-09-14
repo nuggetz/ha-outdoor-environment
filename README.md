@@ -46,6 +46,16 @@ default because they are niche.
 
 Everything is available regardless — a disabled group is one switch away in **Configure**.
 
+### Reading `Comfort Index`
+
+A single 0-100 score built on apparent temperature, where **100 is comfortable and 0 is
+dangerous**. It sits at 100 between 18 °C and 24 °C apparent, and falls to 0 at 40 °C on the
+hot side and at −10 °C on the cold side. The curve is continuous, so the score never jumps,
+and it is defined at every temperature rather than only inside a band.
+
+`Heat Index` and `Wind Chill` remain separate entities in °C and are reported only in the
+conditions their formulas are valid for, so they are `unknown` the rest of the time.
+
 ---
 
 ## Installation
