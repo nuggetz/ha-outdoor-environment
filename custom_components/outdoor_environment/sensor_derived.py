@@ -261,7 +261,12 @@ class AqiForecastMaxSensor(OutdoorDerivedSensor):
 
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = None
-    _attr_entity_registry_enabled_default = False
+    # Enabled once the group is on. The config option is off by default and is
+    # already the gate: leaving these disabled as well would mean a user turns
+    # the forecast on in Configure and still sees nothing. The older optional
+    # groups do carry both gates — changing those is a separate decision, and
+    # inert for anyone who already has their rows in the registry.
+    _attr_entity_registry_enabled_default = True
     # 24 floats rewritten on every coordinator update would be recorded in full
     # each time. The series exists for a card to draw, not for history.
     _unrecorded_attributes = frozenset({"forecast"})

@@ -503,3 +503,29 @@ async def test_categorical_weather_sensors_carry_no_state_class(
     state = hass.states.get(entity_id)
     assert state is not None
     assert state.attributes.get("state_class") is None
+
+
+async def test_forecast_sensors_appear_as_soon_as_the_group_is_enabled(
+    hass, entry_all_groups, aq_response
+):
+    """Turning the option on must be enough — note: no _enable_all_entities here.
+
+    The config option is already the gate. Leaving the entities disabled by
+    default as well would mean enabling the forecast in Configure and still
+    seeing nothing.
+    """
+    entry_all_groups.add_to_hass(hass)
+
+    with _patched_apis(
+        {**_floats(aq_response["current"]), "hourly": _AQ_HOURLY}, _WX_EXTREMES
+    ):
+        assert await hass.config_entries.async_setup(entry_all_groups.entry_id)
+        await hass.async_block_till_done()
+
+    for entity_id in (
+        "sensor.outdoor_environment_european_aqi_max_today",
+        "sensor.outdoor_environment_european_aqi_max_tomorrow",
+        "sensor.outdoor_environment_us_aqi_max_today",
+        "sensor.outdoor_environment_us_aqi_max_tomorrow",
+    ):
+        assert hass.states.get(entity_id) is not None, f"{entity_id} needed enabling by hand"
