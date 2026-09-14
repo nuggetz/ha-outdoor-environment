@@ -275,8 +275,15 @@ WEATHER_SENSORS: tuple[OutdoorSensorDescription, ...] = (
     OutdoorSensorDescription(key="cloud_cover", name="Cloud Cover", native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
     OutdoorSensorDescription(key="visibility", name="Visibility", device_class=SensorDeviceClass.DISTANCE, native_unit_of_measurement=UnitOfLength.METERS, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
     OutdoorSensorDescription(key="surface_pressure", name="Pressure", device_class=SensorDeviceClass.ATMOSPHERIC_PRESSURE, native_unit_of_measurement=UnitOfPressure.HPA, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
-    OutdoorSensorDescription(key="weather_code", name="Weather Code", state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
-    OutdoorSensorDescription(key="is_day", name="Is Day", state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
+    # No state_class: a WMO code is a category wearing a number, so a mean or a
+    # sum of it means nothing. Statistics already recorded for it are orphaned
+    # by this change and Home Assistant offers to delete them.
+    OutdoorSensorDescription(key="weather_code", name="Weather Code", coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
+    # No state_class: 0 or 1. It stays on the sensor platform rather than moving
+    # to binary_sensor — HA's own sun.sun already answers day/night better, and
+    # this one earns its place only when the configured location is not home,
+    # which is not worth breaking an entity_id over.
+    OutdoorSensorDescription(key="is_day", name="Is Day", coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
     OutdoorSensorDescription(key="sunshine_duration", name="Sunshine Duration", device_class=SensorDeviceClass.DURATION, native_unit_of_measurement=UnitOfTime.SECONDS, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
 )
 

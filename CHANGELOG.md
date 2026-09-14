@@ -7,8 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Air quality forecast sensors.** Four opt-in entities: the daily maximum
+  European and US AQI, for today and tomorrow. Enable them under **Configure**.
+  The air quality endpoint publishes no daily block, so the maximum is
+  aggregated from the hourly series, requested on the same call as the current
+  values — no extra API request. It covers the whole calendar day rather than
+  only the hours ahead, so it holds still instead of drifting down as the day
+  passes. Each entity names the day it refers to in a `date` attribute, and
+  carries that day's hourly values in a `forecast` attribute that is deliberately
+  kept out of the recorder.
+  ([#8](https://github.com/nuggetz/ha-outdoor-environment/issues/8))
+
 ### Changed
 
+- **`Weather Code` and `Is Day` no longer declare `state_class`.** A WMO code is
+  a category wearing a number and `Is Day` is a 0/1 flag, so the mean, min and
+  max Home Assistant recorded for them meant nothing. Neither entity_id changes
+  and neither sensor stops working, but **the long-term statistics already
+  recorded for these two are orphaned**, and Home Assistant will offer to delete
+  them. `Is Day` deliberately stays on the sensor platform: Home Assistant's own
+  `sun.sun` answers day/night better, and this sensor earns its place only when
+  the configured location is not the home one — not worth breaking an entity_id
+  over.
 - **BREAKING: `Irrigation Needed` and `Frost Risk` moved to the `binary_sensor`
   platform.** Their `entity_id` changes from `sensor.<name>_irrigation_needed`
   and `sensor.<name>_frost_risk` to `binary_sensor.<name>_...`, and **the old

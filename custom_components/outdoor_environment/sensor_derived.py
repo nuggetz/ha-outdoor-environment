@@ -10,10 +10,12 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 
 from .const import (
+    CONF_ENABLE_AQ_FORECAST,
     CONF_ENABLE_POLLEN,
     EU_SUB_AQI_KEYS,
     calc_ventilation_score,
     comfort_index,
+    daily_max_from_hourly,
     get_api_demand,
     get_dominant_eu_pollutant,
     get_pollen_risk,
@@ -246,6 +248,81 @@ class LightningRiskSensor(OutdoorDerivedSensor):
 # Factory
 # ---------------------------------------------------------------------------
 
+class AqiForecastMaxSensor(OutdoorDerivedSensor):
+    """Highest forecast AQI for one calendar day.
+
+    The air quality endpoint publishes no daily block, so the maximum is
+    aggregated from the hourly series. It covers the whole calendar day,
+    including hours already past: a daily maximum that only looked ahead would
+    drift downwards through the day, and an automation keyed to it would fire at
+    whatever hour the window happened to catch. "Keep the windows shut today"
+    needs a number that holds still.
+    """
+
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = None
+    _attr_entity_registry_enabled_default = False
+    # 24 floats rewritten on every coordinator update would be recorded in full
+    # each time. The series exists for a card to draw, not for history.
+    _unrecorded_attributes = frozenset({"forecast"})
+
+    def __init__(
+        self,
+        entry: ConfigEntry,
+        *,
+        api_key: str,
+        day_index: int,
+        name: str,
+        unique_suffix: str,
+    ) -> None:
+        super().__init__(entry, coordinator_types=("aq",))
+        self._api_key = api_key
+        self._day_index = day_index
+        self._attr_name = name
+        self._attr_unique_id = f"{entry.entry_id}_{unique_suffix}"
+
+    def _day(self) -> tuple[str, float] | None:
+        days = daily_max_from_hourly(self._aq().get("hourly") or {}, self._api_key)
+        if len(days) <= self._day_index:
+            return None
+        return days[self._day_index]
+
+    @property
+    def native_value(self) -> int | None:
+        day = self._day()
+        return None if day is None else round(day[1])
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        day = self._day()
+        if day is None:
+            return {}
+        date, _ = day
+        hourly = self._aq().get("hourly") or {}
+        return {
+            # Which day this actually is, rather than trusting "today" to mean
+            # what the reader assumes: the series is in the location's timezone,
+            # which need not be Home Assistant's.
+            "date": date,
+            "forecast": [
+                value
+                for timestamp, value in zip(
+                    hourly.get("time") or [], hourly.get(self._api_key) or []
+                )
+                if str(timestamp)[:10] == date
+            ],
+        }
+
+
+# (api_key, day_index, name, unique_id suffix)
+AQ_FORECAST_SENSORS: tuple[tuple[str, int, str, str], ...] = (
+    ("european_aqi", 0, "European AQI Max Today", "european_aqi_max_today"),
+    ("european_aqi", 1, "European AQI Max Tomorrow", "european_aqi_max_tomorrow"),
+    ("us_aqi", 0, "US AQI Max Today", "us_aqi_max_today"),
+    ("us_aqi", 1, "US AQI Max Tomorrow", "us_aqi_max_tomorrow"),
+)
+
+
 def create_derived_sensors(
     entry: ConfigEntry,
     cfg: dict[str, Any],
@@ -277,5 +354,17 @@ def create_derived_sensors(
 
     if demand_aq and cfg.get(CONF_ENABLE_POLLEN, True):
         sensors.append(PollenTotalRiskSensor(entry))
+
+    if demand_aq and cfg.get(CONF_ENABLE_AQ_FORECAST, False):
+        sensors.extend(
+            AqiForecastMaxSensor(
+                entry,
+                api_key=api_key,
+                day_index=day_index,
+                name=name,
+                unique_suffix=suffix,
+            )
+            for api_key, day_index, name, suffix in AQ_FORECAST_SENSORS
+        )
 
     return sensors

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import aiohttp
 
@@ -64,6 +65,21 @@ class InvalidResponse(Exception):
     """Raised when the API returns an unexpected response."""
 
 
+# Hourly forecast, fetched on the same call as the current block.
+#
+# The air quality endpoint has no daily block — `daily=european_aqi_max` answers
+# `Cannot initialize ForecastVariableDaily` — so a daily maximum has to be
+# aggregated here from the hourly series. With `forecast_days` the series starts
+# at local midnight rather than at the current hour (that is `forecast_hours`),
+# which is what makes "today's maximum" hold still for the whole day instead of
+# drifting down as hours elapse.
+AQ_HOURLY_VARIABLES: list[str] = [
+    "european_aqi",
+    "us_aqi",
+]
+AQ_FORECAST_DAYS = 2  # today and tomorrow, which is all the sensors expose
+
+
 class AirQualityApiClient:
     """Async wrapper for the Open-Meteo Air Quality API."""
 
@@ -77,12 +93,20 @@ class AirQualityApiClient:
         self._lat = lat
         self._lon = lon
 
-    async def fetch(self) -> dict[str, float | None]:
-        """Return a flat dict of all AQ variables. Null values become None."""
+    async def fetch(self) -> dict[str, Any]:
+        """Return the current AQ variables flat, plus the raw hourly forecast.
+
+        Current values stay at the top level as floats, the way every sensor
+        reads them. The hourly series is nested under "hourly" untouched: it is
+        a list per variable, and turning it into daily maxima is the job of the
+        derived sensors, not of the transport.
+        """
         params = {
             "latitude": self._lat,
             "longitude": self._lon,
             "current": ",".join(AQ_VARIABLES),
+            "hourly": ",".join(AQ_HOURLY_VARIABLES),
+            "forecast_days": AQ_FORECAST_DAYS,
             "timezone": "auto",
         }
         _LOGGER.debug("Fetching AQ data for lat=%s lon=%s", self._lat, self._lon)
@@ -104,8 +128,12 @@ class AirQualityApiClient:
             raise InvalidResponse("missing 'current' field in response")
 
         current: dict[str, object] = data["current"]
-        return {
+        result: dict[str, Any] = {
             key: (float(val) if val is not None else None)
             for key in AQ_VARIABLES
             if (val := current.get(key)) is not None or key in current
         }
+        # A missing hourly block is not an error: every current-value sensor
+        # still works without it, and the forecast sensors report unknown.
+        result["hourly"] = data.get("hourly") or {}
+        return result

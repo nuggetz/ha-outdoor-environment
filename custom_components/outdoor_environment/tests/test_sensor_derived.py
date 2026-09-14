@@ -314,3 +314,74 @@ def test_lightning_risk_none():
     entry = _make_entry({}, {"cape": 50.0, "cloud_cover": 20.0})
     sensor = LightningRiskSensor(entry)
     assert sensor.native_value == "none"
+
+
+# ---------------------------------------------------------------------------
+# AQI forecast (issue #8)
+# ---------------------------------------------------------------------------
+
+def test_daily_max_groups_by_local_calendar_day():
+    from custom_components.outdoor_environment.const import daily_max_from_hourly
+
+    hourly = {
+        "time": ["2026-09-14T00:00", "2026-09-14T15:00", "2026-09-15T03:00", "2026-09-15T14:00"],
+        "european_aqi": [43.0, 82.0, 41.0, 65.0],
+    }
+    assert daily_max_from_hourly(hourly, "european_aqi") == [
+        ("2026-09-14", 82.0),
+        ("2026-09-15", 65.0),
+    ]
+
+
+def test_daily_max_skips_missing_hours_instead_of_reading_them_as_zero():
+    """A gap in the series must not invent a clean day."""
+    from custom_components.outdoor_environment.const import daily_max_from_hourly
+
+    hourly = {
+        "time": ["2026-09-14T00:00", "2026-09-14T15:00"],
+        "european_aqi": [None, 82.0],
+    }
+    assert daily_max_from_hourly(hourly, "european_aqi") == [("2026-09-14", 82.0)]
+
+    all_missing = {"time": ["2026-09-14T00:00"], "european_aqi": [None]}
+    assert daily_max_from_hourly(all_missing, "european_aqi") == []
+
+
+def test_daily_max_tolerates_an_absent_block_or_key():
+    from custom_components.outdoor_environment.const import daily_max_from_hourly
+
+    assert daily_max_from_hourly({}, "european_aqi") == []
+    assert daily_max_from_hourly({"time": ["2026-09-14T00:00"]}, "us_aqi") == []
+
+
+def test_aqi_forecast_sensor_is_unknown_without_that_day():
+    """Tomorrow must report unknown rather than fall back to today."""
+    from custom_components.outdoor_environment.sensor_derived import AqiForecastMaxSensor
+
+    entry = _make_entry(
+        {"hourly": {"time": ["2026-09-14T00:00"], "european_aqi": [43.0]}},
+        {},
+    )
+    today = AqiForecastMaxSensor(
+        entry, api_key="european_aqi", day_index=0, name="x", unique_suffix="x"
+    )
+    tomorrow = AqiForecastMaxSensor(
+        entry, api_key="european_aqi", day_index=1, name="y", unique_suffix="y"
+    )
+    assert today.native_value == 43
+    assert tomorrow.native_value is None
+    assert tomorrow.extra_state_attributes == {}
+
+
+def test_aqi_forecast_sensors_are_opt_in():
+    from custom_components.outdoor_environment.sensor_derived import (
+        AqiForecastMaxSensor,
+        create_derived_sensors,
+    )
+
+    def _forecast_count(cfg):
+        created = create_derived_sensors(_make_entry({}, {}), cfg, True, True)
+        return sum(isinstance(s, AqiForecastMaxSensor) for s in created)
+
+    assert _forecast_count({}) == 0
+    assert _forecast_count({"enable_aq_forecast": True}) == 4

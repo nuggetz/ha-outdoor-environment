@@ -42,6 +42,7 @@ CONF_ENABLE_GROUP_A_SUB = "enable_group_a_sub"
 CONF_ENABLE_GROUP_A_SUB_US = "enable_group_a_sub_us"
 CONF_ENABLE_GROUP_A_EXTRA = "enable_group_a_extra"
 CONF_ENABLE_GROUP_D_AGRO = "enable_group_d_agro"
+CONF_ENABLE_AQ_FORECAST = "enable_aq_forecast"
 
 
 def get_api_demand(cfg: dict[str, object]) -> tuple[bool, bool]:
@@ -53,6 +54,7 @@ def get_api_demand(cfg: dict[str, object]) -> tuple[bool, bool]:
         or cfg.get(CONF_ENABLE_GROUP_A_EXTRA, False)
         or cfg.get(CONF_ENABLE_POLLEN, True)
         or cfg.get(CONF_ENABLE_UV, True)
+        or cfg.get(CONF_ENABLE_AQ_FORECAST, False)
     )
     demand_weather = bool(
         cfg.get(CONF_ENABLE_WEATHER, True)
@@ -262,6 +264,29 @@ def comfort_index(apparent_temperature: float) -> float:
     else:
         score = 100.0
     return max(0.0, min(100.0, score))
+
+
+def daily_max_from_hourly(hourly: dict, key: str) -> list[tuple[str, float]]:
+    """Return one (local date, maximum) pair per calendar day, chronologically.
+
+    The air quality endpoint publishes no daily block, so the daily maximum is
+    built here from the hourly series. Timestamps come back in the location's own
+    timezone, so the first ten characters are its local date and grouping on them
+    needs no timezone arithmetic.
+
+    Hours with no reading are skipped rather than treated as zero: a gap in the
+    series must not invent a clean day.
+    """
+    times = hourly.get("time") or []
+    values = hourly.get(key) or []
+    buckets: dict[str, float] = {}
+    for timestamp, value in zip(times, values):
+        if value is None:
+            continue
+        day = str(timestamp)[:10]
+        current = buckets.get(day)
+        buckets[day] = float(value) if current is None else max(current, float(value))
+    return sorted(buckets.items())
 
 
 def solar_production_factor(cloud_cover: float, shortwave_radiation: float) -> float:

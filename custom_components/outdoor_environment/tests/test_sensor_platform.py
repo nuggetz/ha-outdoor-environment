@@ -29,6 +29,18 @@ _WX_PATH = (
 )
 
 
+# Two calendar days of hourly AQI, mirroring what the client nests under
+# "hourly". Today peaks at 82, tomorrow at 65.
+_AQ_HOURLY: dict[str, list] = {
+    "time": [
+        "2026-09-14T00:00", "2026-09-14T15:00", "2026-09-14T23:00",
+        "2026-09-15T03:00", "2026-09-15T14:00",
+    ],
+    "european_aqi": [43.0, 82.0, 51.0, 41.0, 65.0],
+    "us_aqi": [60.0, 121.0, 70.0, 55.0, 111.0],
+}
+
+
 def _floats(current: dict) -> dict[str, float | None]:
     """Mirror what the API clients return: every value cast to float or None."""
     return {
@@ -64,6 +76,7 @@ def entry_all_groups() -> MockConfigEntry:
             "enable_group_a_sub_us": True,
             "enable_group_a_extra": True,
             "enable_group_d_agro": True,
+            "enable_aq_forecast": True,
         },
         options={},
     )
@@ -141,7 +154,7 @@ async def test_default_config_adds_every_entity_without_error(
     caplog.set_level(logging.ERROR)
     entry_all_groups.add_to_hass(hass)
 
-    with _patched_apis(_floats(aq_response["current"]), _floats(wx_response["current"])):
+    with _patched_apis({**_floats(aq_response["current"]), "hourly": _AQ_HOURLY}, _floats(wx_response["current"])):
         assert await hass.config_entries.async_setup(entry_all_groups.entry_id)
         await hass.async_block_till_done()
 
@@ -182,7 +195,7 @@ async def test_panel_tilt_options_are_merged_and_reloaded(
         seen_panel_values.append((self._panel_tilt, self._panel_azimuth))
         return _floats(wx_response_gti["current"])
 
-    with patch(_AQ_PATH, return_value=_floats(aq_response["current"])), patch(
+    with patch(_AQ_PATH, return_value={**_floats(aq_response["current"]), "hourly": _AQ_HOURLY}), patch(
         "custom_components.outdoor_environment.api_client_weather.WeatherApiClient.fetch",
         new=_mock_weather_fetch,
     ):
@@ -228,7 +241,7 @@ async def test_every_entity_including_disabled_writes_a_state(
     caplog.set_level(logging.ERROR)
     entry_all_groups.add_to_hass(hass)
 
-    aq = _floats(aq_response["current"])
+    aq = {**_floats(aq_response["current"]), "hourly": _AQ_HOURLY}
     with _patched_apis(aq, _WX_EXTREMES):
         assert await hass.config_entries.async_setup(entry_all_groups.entry_id)
         await hass.async_block_till_done()
@@ -256,7 +269,7 @@ async def test_non_numeric_sensors_expose_their_value(
     """The non-numeric derived sensors must reach HA with their real value."""
     entry_all_groups.add_to_hass(hass)
 
-    with _patched_apis(_floats(aq_response["current"]), _WX_EXTREMES):
+    with _patched_apis({**_floats(aq_response["current"]), "hourly": _AQ_HOURLY}, _WX_EXTREMES):
         assert await hass.config_entries.async_setup(entry_all_groups.entry_id)
         await hass.async_block_till_done()
         await _enable_all_entities(hass, entry_all_groups)
@@ -289,7 +302,7 @@ async def test_enum_sensors_declare_options_and_no_state_class(
     """
     entry_all_groups.add_to_hass(hass)
 
-    with _patched_apis(_floats(aq_response["current"]), _WX_EXTREMES):
+    with _patched_apis({**_floats(aq_response["current"]), "hourly": _AQ_HOURLY}, _WX_EXTREMES):
         assert await hass.config_entries.async_setup(entry_all_groups.entry_id)
         await hass.async_block_till_done()
         await _enable_all_entities(hass, entry_all_groups)
@@ -314,7 +327,7 @@ async def test_stale_sensor_entities_are_removed_from_the_registry(
         config_entry=mock_config_entry,
     )
 
-    with _patched_apis(_floats(aq_response["current"]), _floats(wx_response["current"])):
+    with _patched_apis({**_floats(aq_response["current"]), "hourly": _AQ_HOURLY}, _floats(wx_response["current"])):
         assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
         await hass.async_block_till_done()
 
@@ -341,7 +354,7 @@ async def test_cleanup_leaves_other_platforms_alone(
         config_entry=mock_config_entry,
     )
 
-    with _patched_apis(_floats(aq_response["current"]), _floats(wx_response["current"])):
+    with _patched_apis({**_floats(aq_response["current"]), "hourly": _AQ_HOURLY}, _floats(wx_response["current"])):
         assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
         await hass.async_block_till_done()
 
@@ -364,7 +377,7 @@ async def test_disabling_a_group_prunes_only_that_group(
     weather_uid = f"{mock_config_entry.entry_id}_temperature_2m"
     aq_uid = f"{mock_config_entry.entry_id}_european_aqi"
 
-    with _patched_apis(_floats(aq_response["current"]), _floats(wx_response["current"])):
+    with _patched_apis({**_floats(aq_response["current"]), "hourly": _AQ_HOURLY}, _floats(wx_response["current"])):
         assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
         await hass.async_block_till_done()
 
@@ -398,6 +411,7 @@ def test_every_derived_sensor_is_covered_by_this_module():
         "VentilationScoreSensor",
         "SolarProductionFactorSensor",
         "LightningRiskSensor",
+        "AqiForecastMaxSensor",
     }
     actual = {
         name
@@ -410,3 +424,82 @@ def test_every_derived_sensor_is_covered_by_this_module():
         "Derived sensors changed. Add the new sensor to the platform tests above "
         "and confirm its native_value type matches its state_class."
     )
+
+
+@pytest.mark.parametrize(
+    ("entity_id", "expected", "expected_date"),
+    [
+        ("sensor.outdoor_environment_european_aqi_max_today", "82", "2026-09-14"),
+        ("sensor.outdoor_environment_european_aqi_max_tomorrow", "65", "2026-09-15"),
+        ("sensor.outdoor_environment_us_aqi_max_today", "121", "2026-09-14"),
+        ("sensor.outdoor_environment_us_aqi_max_tomorrow", "111", "2026-09-15"),
+    ],
+)
+async def test_aqi_forecast_sensors_report_the_daily_maximum(
+    hass, entry_all_groups, aq_response, wx_response, entity_id, expected, expected_date
+):
+    """The maximum is aggregated from the hourly series, per calendar day."""
+    entry_all_groups.add_to_hass(hass)
+
+    with _patched_apis(
+        {**_floats(aq_response["current"]), "hourly": _AQ_HOURLY}, _WX_EXTREMES
+    ):
+        assert await hass.config_entries.async_setup(entry_all_groups.entry_id)
+        await hass.async_block_till_done()
+        await _enable_all_entities(hass, entry_all_groups)
+
+    state = hass.states.get(entity_id)
+    assert state is not None, f"{entity_id} was not created"
+    assert state.state == expected
+    # The day is named explicitly: the series is in the location's timezone,
+    # which need not be the one Home Assistant runs in.
+    assert state.attributes["date"] == expected_date
+
+
+async def test_aqi_forecast_series_is_kept_out_of_the_recorder(
+    hass, entry_all_groups, aq_response
+):
+    """24 floats per update would be written to history on every refresh."""
+    from custom_components.outdoor_environment.sensor_derived import AqiForecastMaxSensor
+
+    assert "forecast" in AqiForecastMaxSensor._unrecorded_attributes
+
+    entry_all_groups.add_to_hass(hass)
+    with _patched_apis(
+        {**_floats(aq_response["current"]), "hourly": _AQ_HOURLY}, _WX_EXTREMES
+    ):
+        assert await hass.config_entries.async_setup(entry_all_groups.entry_id)
+        await hass.async_block_till_done()
+        await _enable_all_entities(hass, entry_all_groups)
+
+    state = hass.states.get("sensor.outdoor_environment_european_aqi_max_today")
+    assert state.attributes["forecast"] == [43.0, 82.0, 51.0]
+
+
+@pytest.mark.parametrize(
+    "entity_id",
+    [
+        "sensor.outdoor_environment_weather_code",
+        "sensor.outdoor_environment_is_day",
+    ],
+)
+async def test_categorical_weather_sensors_carry_no_state_class(
+    hass, entry_all_groups, aq_response, entity_id
+):
+    """A WMO code and a 0/1 flag are categories, whatever their type says.
+
+    Neither crashed with state_class=measurement — both are numeric — but the
+    statistics built from them were meaningless.
+    """
+    entry_all_groups.add_to_hass(hass)
+
+    with _patched_apis(
+        {**_floats(aq_response["current"]), "hourly": _AQ_HOURLY}, _WX_EXTREMES
+    ):
+        assert await hass.config_entries.async_setup(entry_all_groups.entry_id)
+        await hass.async_block_till_done()
+        await _enable_all_entities(hass, entry_all_groups)
+
+    state = hass.states.get(entity_id)
+    assert state is not None
+    assert state.attributes.get("state_class") is None

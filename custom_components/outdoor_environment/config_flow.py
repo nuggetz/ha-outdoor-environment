@@ -28,6 +28,7 @@ from .const import (
     CONF_ENABLE_GROUP_A_EXTRA,
     CONF_ENABLE_GROUP_A_SUB,
     CONF_ENABLE_GROUP_A_SUB_US,
+    CONF_ENABLE_AQ_FORECAST,
     CONF_ENABLE_GROUP_D_AGRO,
     CONF_ENABLE_POLLEN,
     CONF_ENABLE_SOLAR,
@@ -232,6 +233,7 @@ class OutdoorEnvironmentOptionsFlow(OptionsFlow):
                 vol.Required(CONF_ENABLE_GROUP_A_SUB_US, default=current.get(CONF_ENABLE_GROUP_A_SUB_US, False)): BooleanSelector(),
                 vol.Required(CONF_ENABLE_GROUP_A_EXTRA, default=current.get(CONF_ENABLE_GROUP_A_EXTRA, False)): BooleanSelector(),
                 vol.Required(CONF_ENABLE_GROUP_D_AGRO, default=current.get(CONF_ENABLE_GROUP_D_AGRO, False)): BooleanSelector(),
+                vol.Required(CONF_ENABLE_AQ_FORECAST, default=current.get(CONF_ENABLE_AQ_FORECAST, False)): BooleanSelector(),
             }
         )
 

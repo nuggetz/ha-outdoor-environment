@@ -39,6 +39,7 @@ A Home Assistant custom integration that exposes **80+ outdoor environment senso
 | **E — Solar** | GHI, direct, diffuse, DNI, terrestrial radiation, GTI (optional) | ✅ |
 | **F — Derived** | Comfort index, heat index, wind chill, dominant pollutant, pollen risk, ventilation score, solar production factor, lightning risk | ⚙️ |
 | **F — Binary** | Irrigation needed, frost risk — on the `binary_sensor` platform | ⬜ |
+| **G — AQ forecast** | EU and US AQI daily maximum, today and tomorrow | ⬜ |
 
 ✅ enabled by default · ⬜ available, disabled by default · 🌍 enabled by default only for
 locations inside Europe, where Open-Meteo publishes pollen data · ⚙️ derived from the groups
@@ -56,6 +57,20 @@ and it is defined at every temperature rather than only inside a band.
 
 `Heat Index` and `Wind Chill` remain separate entities in °C and are reported only in the
 conditions their formulas are valid for, so they are `unknown` the rest of the time.
+
+### Reading the air quality forecast
+
+Four opt-in sensors: the **daily maximum** European and US AQI for today and tomorrow. Enable
+them under **Configure**.
+
+The maximum covers the **whole calendar day**, including hours that have already passed, so it
+holds still instead of drifting down as the day goes on — a "keep the windows shut today"
+automation should not depend on the hour it happens to run. Each entity names the day it refers
+to in a `date` attribute, because the forecast is in the configured location's timezone, which
+need not be the one Home Assistant runs in.
+
+A `forecast` attribute carries that day's hourly values for a card to draw. It is excluded from
+the recorder on purpose: writing 24 floats to history on every refresh is not worth it.
 
 ### Reading `Irrigation Needed`
 

@@ -55,7 +55,8 @@
           "enable_group_a_sub": "Enable EU sub-AQI per pollutant",
           "enable_group_a_sub_us": "Enable US sub-AQI per pollutant",
           "enable_group_a_extra": "Enable advanced pollutant sensors",
-          "enable_group_d_agro": "Enable agrometeorological sensors"
+          "enable_group_d_agro": "Enable agrometeorological sensors",
+          "enable_aq_forecast": "Enable air quality forecast sensors"
         }
       }
     }

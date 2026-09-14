@@ -55,7 +55,8 @@
           "enable_group_a_sub": "Abilita sub-AQI EU per inquinante",
           "enable_group_a_sub_us": "Abilita sub-AQI US per inquinante",
           "enable_group_a_extra": "Abilita sensori inquinanti avanzati",
-          "enable_group_d_agro": "Abilita sensori agrometeo"
+          "enable_group_d_agro": "Abilita sensori agrometeo",
+          "enable_aq_forecast": "Abilita sensori di previsione qualità dell'aria"
         }
       }
     }
