@@ -309,23 +309,57 @@ async def test_derived_sensors_only_subscribe_to_used_coordinators(
 def test_irrigation_needed_true():
     entry = _make_entry(
         {},
-        {"et0_fao_evapotranspiration": 5.0, "precipitation": 1.0},
+        {"daily_et0_fao_evapotranspiration": 5.0, "daily_precipitation_sum": 1.0},
         options={"irrigation_threshold_mm": 2.0},
     )
     sensor = IrrigationNeededSensor(entry)
     assert sensor.native_value is True
     attrs = sensor.extra_state_attributes
     assert attrs["deficit_mm"] == pytest.approx(4.0)
+    assert attrs["et0_today"] == 5.0
+    assert attrs["precipitation_today"] == 1.0
 
 
 def test_irrigation_needed_false():
     entry = _make_entry(
         {},
-        {"et0_fao_evapotranspiration": 1.0, "precipitation": 3.0},
+        {"daily_et0_fao_evapotranspiration": 1.0, "daily_precipitation_sum": 3.0},
         options={"irrigation_threshold_mm": 2.0},
     )
     sensor = IrrigationNeededSensor(entry)
     assert sensor.native_value is False
+
+
+def test_irrigation_needed_ignores_the_current_interval_values():
+    """The bug: a 15-minute ET0 was compared against a per-day threshold.
+
+    Real figures from Open-Meteo for Milan, 2026-09-14 — 0.11 mm over the
+    current 15-minute interval against 3.57 mm for the day. Feeding only the
+    current-interval keys must leave the sensor unknown rather than quietly
+    answering "no" forever, which is what it did for three releases.
+    """
+    entry = _make_entry(
+        {},
+        {"et0_fao_evapotranspiration": 0.11, "precipitation": 0.0},
+        options={"irrigation_threshold_mm": 2.0},
+    )
+    assert IrrigationNeededSensor(entry).native_value is None
+
+    entry = _make_entry(
+        {},
+        {"daily_et0_fao_evapotranspiration": 3.57, "daily_precipitation_sum": 0.0},
+        options={"irrigation_threshold_mm": 2.0},
+    )
+    assert IrrigationNeededSensor(entry).native_value is True
+
+
+def test_irrigation_needed_states_that_its_figures_are_forecasts():
+    entry = _make_entry(
+        {},
+        {"daily_et0_fao_evapotranspiration": 5.0, "daily_precipitation_sum": 1.0},
+    )
+    attrs = IrrigationNeededSensor(entry).extra_state_attributes
+    assert "forecast" in attrs["period"]
 
 
 def test_frost_risk_true():

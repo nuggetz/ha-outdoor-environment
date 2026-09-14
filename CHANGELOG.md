@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`Irrigation Needed` never turned on, in any climate.** It compared
+  evapotranspiration from the `current` block — a figure covering that block's
+  own 15-minute interval — against a threshold measured in millimetres per day,
+  a comparison that cannot be true. Measured against Open-Meteo for Milan on
+  2026-09-14: 0.11 mm over the current interval against 3.59 mm for the day, on
+  a 2 mm threshold. The sensor now uses the API's daily totals
+  (`et0_fao_evapotranspiration` and `precipitation_sum`), requested on the same
+  call, so there is no extra API request. The `et0_today` and
+  `precipitation_today` attributes finally hold what their names claim, and a
+  new `period` attribute records that both are forecasts for the whole day
+  rather than what has accumulated so far.
+  If you have an automation on this sensor, **it can now fire for the first
+  time.**
+
 ### Changed
 
 - **`Comfort Index` is now a single continuous measure instead of three
