@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-09-14
+
+### Fixed
+
+- **Deprecation warnings for `CONCENTRATION_MICROGRAMS_PER_CUBIC_METER` and
+  `CONCENTRATION_PARTS_PER_MILLION` in the Home Assistant log.** Both constants
+  are deprecated in favour of `UnitOfDensity.MICROGRAMS_PER_CUBIC_METER` and
+  `UnitOfRatio.PARTS_PER_MILLION`, which only exist from HA 2026.7.0 onwards —
+  adopting them would have raised the minimum supported version from 2024.1.0 to
+  pre-empt a removal scheduled for HA 2027.8. The unit strings are byte-identical,
+  so the component now declares them itself. The warnings stop, the minimum stays
+  at 2024.1.0, and no entity, unit or long-term statistic changes.
+  ([#11](https://github.com/nuggetz/ha-outdoor-environment/issues/11))
+
 ## [0.2.0] - 2026-09-07
 
 ### Fixed

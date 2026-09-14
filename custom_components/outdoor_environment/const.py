@@ -14,6 +14,18 @@ DEFAULT_AQ_UPDATE_MINUTES = 60
 DEFAULT_WEATHER_UPDATE_MINUTES = 15
 DEFAULT_IRRIGATION_THRESHOLD_MM = 2.0
 
+# Units
+#
+# These are the exact string values of UnitOfDensity.MICROGRAMS_PER_CUBIC_METER and
+# UnitOfRatio.PARTS_PER_MILLION, which only exist from HA 2026.7.0 onwards. Importing
+# them would raise our minimum from 2024.1.0; importing the CONCENTRATION_* aliases
+# instead logs a deprecation warning on every recent HA install (issue #11). Defining
+# the literals keeps both the minimum and the logs clean. Swap to the enums once
+# 2026.7.0 is old enough to be the declared minimum.
+# test_units.py asserts these stay identical to the enums wherever they are available.
+UNIT_MICROGRAMS_PER_CUBIC_METER = "μg/m³"
+UNIT_PARTS_PER_MILLION = "ppm"
+
 # Config / options entry keys
 CONF_USE_HOME_LOCATION = "use_home_location"
 CONF_ENABLE_AIR_QUALITY = "enable_air_quality"
