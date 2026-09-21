@@ -159,8 +159,8 @@ automation:
 automation:
   trigger:
     - platform: state
-      entity_id: sensor.outdoor_irrigation_needed
-      to: "True"
+      entity_id: binary_sensor.outdoor_irrigation_needed
+      to: "on"
   action:
     - service: switch.turn_on
       target:
