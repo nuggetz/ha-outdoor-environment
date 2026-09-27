@@ -193,7 +193,13 @@ class OutdoorEnvironmentOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            options = dict(user_input)
+            # An empty tilt box means "no solar panel", and the frontend omits
+            # the key entirely. Without an explicit None the value in
+            # entry.data would come back through the {**data, **options} merge,
+            # so the tilt could never be removed once set.
+            options.setdefault(CONF_PANEL_TILT, None)
+            return self.async_create_entry(title="", data=options)
 
         current = {**self._config_entry.data, **self._config_entry.options}
         lat = current.get(CONF_LATITUDE, self.hass.config.latitude)
@@ -214,7 +220,13 @@ class OutdoorEnvironmentOptionsFlow(OptionsFlow):
                 vol.Required(CONF_ENABLE_UV, default=current.get(CONF_ENABLE_UV, True)): BooleanSelector(),
                 vol.Required(CONF_ENABLE_WEATHER, default=current.get(CONF_ENABLE_WEATHER, True)): BooleanSelector(),
                 vol.Required(CONF_ENABLE_SOLAR, default=current.get(CONF_ENABLE_SOLAR, True)): BooleanSelector(),
-                vol.Optional(CONF_PANEL_TILT, default=current.get(CONF_PANEL_TILT)): NumberSelector(
+                # suggested_value, not default: a default of None is fed back
+                # into the selector when the box is left empty, and the whole
+                # form then fails validation on this one field.
+                vol.Optional(
+                    CONF_PANEL_TILT,
+                    description={"suggested_value": current.get(CONF_PANEL_TILT)},
+                ): NumberSelector(
                     NumberSelectorConfig(min=0, max=90, step=1, mode=NumberSelectorMode.BOX)
                 ),
                 vol.Optional(CONF_PANEL_AZIMUTH, default=current.get(CONF_PANEL_AZIMUTH, 0)): NumberSelector(

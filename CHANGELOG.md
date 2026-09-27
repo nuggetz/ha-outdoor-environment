@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **The options form could not be saved at all unless a solar panel tilt was
+  configured.** Submitting **Configure** silently failed validation on the
+  `Panel tilt` field whenever that field was empty, which is the case for every
+  installation that skipped the solar panel step during setup. Nothing was
+  written and nothing reached the log, so every setting in the form — update
+  intervals, irrigation threshold, the optional sensor groups, and the air
+  quality forecast toggle added in 0.3.0 — appeared to save and then came back
+  unchanged. Present since 0.1.0; it only became visible with 0.3.0, which added
+  the first option most people want to switch on after installing.
+  ([#16](https://github.com/nuggetz/ha-outdoor-environment/issues/16))
+- **Emptying the `Panel tilt` field now removes the panel.** It previously had no
+  effect, because the value stored at setup time came back through the merge of
+  config data and options. Clearing it deletes the `Global Tilted Irradiance`
+  entity along with its history, the same way disabling a sensor group does.
+
 ## [0.3.0] - 2026-09-21
 
 ### Added
