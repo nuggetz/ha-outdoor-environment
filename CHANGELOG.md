@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Cloud cover per layer and wind at 250 hPa**, for astronomy setups. `Cloud
+  Cover Low`, `Cloud Cover Mid` and `Cloud Cover High` tell thin high cloud,
+  which often still allows imaging, apart from low cloud, which does not.
+  `Wind Speed 250 hPa` is the wind at jet stream level, roughly 10 km up, and a
+  rough seeing indicator: very high or very low speeds usually mean bad seeing,
+  but how well it works depends on the site. All four come with the existing
+  weather request, so there are no extra API calls, and all four are disabled
+  by default. ([#17](https://github.com/nuggetz/ha-outdoor-environment/issues/17))
+
 ## [0.3.1] - 2026-09-27
 
 ### Fixed
@@ -220,6 +233,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so a failure in one API does not affect the other.
 - Config flow with per-group enable switches and configurable update intervals.
 
+[Unreleased]: https://github.com/nuggetz/ha-outdoor-environment/compare/v0.3.1...HEAD
 [0.3.1]: https://github.com/nuggetz/ha-outdoor-environment/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/nuggetz/ha-outdoor-environment/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/nuggetz/ha-outdoor-environment/compare/v0.2.1...v0.2.2

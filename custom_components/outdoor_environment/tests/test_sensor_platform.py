@@ -91,11 +91,15 @@ _WX_EXTREMES: dict[str, float] = {
     "dew_point_2m": 0.0,
     "wind_speed_10m": 2.0,
     "wind_gusts_10m": 5.0,
+    "wind_speed_250hPa": 126.0,
     "wind_direction_10m": 180.0,
     "precipitation": 0.0,
     "rain": 0.0,
     "snowfall": 0.0,
     "cloud_cover": 80.0,
+    "cloud_cover_low": 70.0,
+    "cloud_cover_mid": 20.0,
+    "cloud_cover_high": 40.0,
     "visibility": 10000.0,
     "surface_pressure": 1000.0,
     "weather_code": 95.0,
@@ -529,3 +533,28 @@ async def test_forecast_sensors_appear_as_soon_as_the_group_is_enabled(
         "sensor.outdoor_environment_us_aqi_max_tomorrow",
     ):
         assert hass.states.get(entity_id) is not None, f"{entity_id} needed enabling by hand"
+
+
+async def test_astronomy_sensors_exist_but_start_disabled(
+    hass, mock_config_entry, aq_response, wx_response
+):
+    """Issue #17: one gate only, the entity one, under the default weather group.
+
+    A dedicated config flag on top of disabled entities would repeat the double
+    gate the old optional groups have.
+    """
+    mock_config_entry.add_to_hass(hass)
+
+    with _patched_apis({**_floats(aq_response["current"]), "hourly": _AQ_HOURLY}, _floats(wx_response["current"])):
+        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+
+    registry = er.async_get(hass)
+    by_unique_id = {
+        e.unique_id: e
+        for e in registry.entities.values()
+        if e.config_entry_id == mock_config_entry.entry_id
+    }
+    for key in ("cloud_cover_low", "cloud_cover_mid", "cloud_cover_high", "wind_speed_250hPa"):
+        entity = by_unique_id[f"{mock_config_entry.entry_id}_{key}"]
+        assert entity.disabled_by is er.RegistryEntryDisabler.INTEGRATION

@@ -272,7 +272,13 @@ WEATHER_SENSORS: tuple[OutdoorSensorDescription, ...] = (
     OutdoorSensorDescription(key="wind_speed_10m", name="Wind Speed", device_class=SensorDeviceClass.WIND_SPEED, native_unit_of_measurement=UnitOfSpeed.KILOMETERS_PER_HOUR, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
     OutdoorSensorDescription(key="wind_direction_10m", name="Wind Direction", native_unit_of_measurement="°", state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
     OutdoorSensorDescription(key="wind_gusts_10m", name="Wind Gusts", device_class=SensorDeviceClass.WIND_SPEED, native_unit_of_measurement=UnitOfSpeed.KILOMETERS_PER_HOUR, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
+    # Wind at roughly 10 km altitude, the jet stream level. A rough seeing
+    # indicator for astronomy, nothing more; how well it works depends on the site.
+    OutdoorSensorDescription(key="wind_speed_250hPa", name="Wind Speed 250 hPa", device_class=SensorDeviceClass.WIND_SPEED, native_unit_of_measurement=UnitOfSpeed.KILOMETERS_PER_HOUR, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=False),
     OutdoorSensorDescription(key="cloud_cover", name="Cloud Cover", native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
+    OutdoorSensorDescription(key="cloud_cover_low", name="Cloud Cover Low", native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=False),
+    OutdoorSensorDescription(key="cloud_cover_mid", name="Cloud Cover Mid", native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=False),
+    OutdoorSensorDescription(key="cloud_cover_high", name="Cloud Cover High", native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=False),
     OutdoorSensorDescription(key="visibility", name="Visibility", device_class=SensorDeviceClass.DISTANCE, native_unit_of_measurement=UnitOfLength.METERS, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
     OutdoorSensorDescription(key="surface_pressure", name="Pressure", device_class=SensorDeviceClass.ATMOSPHERIC_PRESSURE, native_unit_of_measurement=UnitOfPressure.HPA, state_class=SensorStateClass.MEASUREMENT, coordinator_type=_COORDINATOR_WEATHER, enabled_default=True),
     # No state_class: a WMO code is a category wearing a number, so a mean or a

@@ -34,7 +34,7 @@ A Home Assistant custom integration that exposes **80+ outdoor environment senso
 | **A-extra — Advanced** | Formaldehyde, glyoxal, NO, PAN, sea salt aerosol | ⬜ |
 | **B — Pollen** | Grass, birch, alder, olive, ragweed, mugwort | 🌍 |
 | **C — UV** | UV Index, UV Index Clear Sky | ✅ |
-| **D — Weather** | Temperature, humidity, apparent temp, dew point, precipitation, wind, cloud cover, visibility, pressure, weather code | ✅ |
+| **D — Weather** | Temperature, humidity, apparent temp, dew point, precipitation, wind, cloud cover, visibility, pressure, weather code — plus cloud cover per layer (low, mid, high) and wind at 250 hPa, disabled by default | ✅ |
 | **D-agro — Agro** | Evapotranspiration (ET0), VPD, CAPE, wet bulb temperature | ⬜ |
 | **E — Solar** | GHI, direct, diffuse, DNI, terrestrial radiation, GTI (optional) | ✅ |
 | **F — Derived** | Comfort index, heat index, wind chill, dominant pollutant, pollen risk, ventilation score, solar production factor, lightning risk | ⚙️ |

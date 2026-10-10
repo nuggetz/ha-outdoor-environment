@@ -132,3 +132,19 @@ async def test_fetch_survives_a_missing_daily_block(session, wx_response):
     assert result["temperature_2m"] == 22.5
     assert result["daily_et0_fao_evapotranspiration"] is None
     assert result["daily_precipitation_sum"] is None
+
+
+@pytest.mark.asyncio
+async def test_fetch_requests_cloud_layers_and_jet_stream_wind(session, wx_response):
+    """Issue #17: on the same call, as current values, in the existing km/h unit."""
+    session.get.return_value = _make_response(wx_response)
+    client = WeatherApiClient(session, 45.46, 9.19)
+    result = await client.fetch()
+
+    params = session.get.call_args.kwargs["params"]
+    current = params["current"].split(",")
+    for key in ("cloud_cover_low", "cloud_cover_mid", "cloud_cover_high", "wind_speed_250hPa"):
+        assert key in current
+        assert result[key] is not None
+    assert params["wind_speed_unit"] == "kmh"
+    assert session.get.call_count == 1
